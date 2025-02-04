@@ -1,0 +1,521 @@
+#import everything
+from transformers import AutoTokenizer,set_seed
+from dataset import MimicDataset
+import torch
+import torch.nn.functional as F
+from transformers import set_seed, AutoTokenizer
+import math
+from tqdm import tqdm
+from dataset import MimicDataset
+import random
+import json
+import time
+from sentence_transformers import SentenceTransformer
+import ollama
+from argparse import ArgumentParser
+import pandas as pd
+import json
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+
+#set the seed
+set_seed(17)
+
+#set the arguments
+parser = ArgumentParser()
+parser.add_argument("--num_shots",type=int,default=5,help="Number of few-shot examples to use")
+parser.add_argument("--num_c",type=int,default=5,help="Number of classes to generate samples for")
+parser.add_argument("--dataset_size",type=int,default=50000,help="Number of samples to generate for each class")
+parser.add_argument("--num_partitions",type=int,default=500,help="Number of partitions to split the training data into")
+parser.add_argument("--canary",type=str,default=None,help="Canary string to use")
+parser.add_argument("--canary_n",type=int,default=1,help="Number of canary strings to use")
+parser.add_argument("--generated_dataset_size",type=int,default=100,help="Number of samples to generate for each class")
+parser.add_argument("--nonprivate",action="store_true",help="Use non-private ESA")
+parser.add_argument("--long_titles",action="store_true",help="Use long titles (actual disease names)")
+parser.add_argument("--epsilons",nargs="+",type=float,default=[1,3,8],help="Epsilons to use for private ESA")
+parser.add_argument("--ensemble1",type=int,default=5,help="Number of samples to average for the few-shot examples")
+parser.add_argument("--ensemble2",type=int,default=5,help="Number of samples to average for the zero-shot examples")
+parser.add_argument("--prompt_index",type=int,default=0,help="Index of the prompt to use")
+parser.add_argument("--zero_shot_forced",type=int,default=0,help="Number of zero-shot examples to force the canary into")
+parser.add_argument("--temperature", type=float, default=0.7, help="Temperature for model generation")
+parser.add_argument("--cardio",action="store_true",help="Use cardio codes")
+parser.add_argument("--canary_rate",type=float,default=0,help="Rate of few-shot examples containing the canary")
+args = parser.parse_args()
+
+
+
+
+NUM_SHOTS = args.num_shots
+NUM_C = args.num_c
+DATASET_SIZE = args.dataset_size
+GENERATED_DATASET_SIZE = args.generated_dataset_size
+NUM_PARTITIONS = GENERATED_DATASET_SIZE*args.ensemble2    #NUM_PARTITIONS needs to be at least GENERATED_DATASET_SIZE*ensemble2, does it make sense to have it be more? NO
+CANARY = args.canary
+CANARY_N = args.canary_n
+
+EPSILONS = args.epsilons
+#define start runtime
+start = time.time()
+
+prompts = ["Generate a clinical discharge summary of a patient who had the conditions and procedures described by the following codes ICD10-CODES= ",
+"""Please generate a realistic and concise clinical discharge summary for a patient based on the following ICD-10 codes. Do not include the ICD-10 codes themselves in the report; instead, refer to the medical conditions they represent. Before writing the summary, internally create a logical and medically accurate timeline of the patient's diagnosis, treatment, and progress. Use standard medical abbreviations where appropriate to mirror real clinical documentation. Focus on essential clinical information, avoiding unnecessary explanations or verbosity. Ensure that the report accurately reflects the management of both common and rare diseases as applicable. Requirements:\
+
+Use standard medical abbreviations (e.g., BP for blood pressure, HR for heart rate).
+Keep the summary concise and focused on relevant clinical details.
+Ensure the sequence of events and timing within the report make medical sense.
+Cover a wide range of use cases, including rare diseases when specified.
+Do not include any ICD-10 codes in the text of the report.
+Format:
+
+Admission Date: [Provide a realistic date]
+Discharge Date: [Provide a realistic date]
+Discharge Summary:
+Reason for Admission: [Briefly state]
+History of Present Illness: [Concise description]
+Hospital Course: [Key interventions and patient response]
+Discharge Plan: [Medications, follow-up, patient instructions]
+ICD10-CODES= """,
+"""
+Please generate a realistic, concise, and professional clinical discharge summary for a patient based on the following ICD-10 codes. Do not include the ICD-10 codes themselves in the report; instead, reference the medical conditions they represent. Before composing the summary, internally develop a logical and medically accurate patient case, including the timeline of symptom onset, diagnosis, interventions, and outcomes. Do not include this internal planning in the final summary.
+
+The discharge summary should:
+
+Use clinical language with standard medical abbreviations (e.g., CHF for congestive heart failure, N/V for nausea and vomiting).
+Be succinct, focusing on essential clinical information without unnecessary explanations.
+Reflect a coherent and medically plausible sequence of events with appropriate timing.
+Represent a wide range of cases, including both common and rare conditions when specified.
+Mimic the style and tone of actual clinical documentation used among healthcare professionals.
+Format:
+
+Patient Identification:
+Name: [Use initials only, e.g., J.D.]
+Age/Gender: [e.g., 45-year-old male]
+Admission Date: [Realistic date]
+Discharge Date: [Realistic date]
+Admitting Diagnosis: [Primary reason for admission]
+Discharge Diagnoses:
+Primary: [State main condition]
+Secondary: [List comorbidities or complications]
+Hospital Course:
+[Summarize key diagnostic findings, treatments, and patient response]
+Discharge Instructions:
+Medications: [List with dosages]
+Follow-Up: [Appointments, referrals]
+Activity: [Restrictions or recommendations]
+Diet: [Instructions if applicable]
+Warnings: [Symptoms that require immediate attention]
+Additional Requirements:
+
+Exclude any patient-identifiable information beyond initials.
+Do not include the internal case planning or timeline in the summary.
+Ensure medical accuracy and plausibility in terms of disease progression and treatment.
+Use appropriate medical terminology relevant to the conditions.
+ICD10-CODES= """
+]
+
+test_prompt = f"Generate a clinical discharge summary of {CANARY} a patient who had the conditions and procedures described by the following codes ICD10-CODES= "
+
+reverse_index = {prompt: i for i,prompt in enumerate(prompts)}
+
+#set the seed
+set_seed(42)
+
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B",truncation=True,max_length=100)
+tokenizer.pad_token_id = tokenizer.eos_token_id
+
+#initialize the dataset
+#dataset = MimicDataset("./data/train.csv", tokenizer, max_seq_len=1000,canary=CANARY,canary_n=CANARY_N)
+dataset = pd.read_feather("/home/michele/dtfh_private/mimic/data/mimiciv_icd10.feather")
+dataset_split = pd.read_feather("/home/michele/dtfh_private/mimic/data/mimiciv_icd10_split.feather")
+#get only test split
+#print(len(dataset))
+dataset = dataset[dataset_split["split"]=="test"]
+#print(len(dataset))
+#reset indices
+dataset = dataset.reset_index(drop=True)
+
+#open "./data/cardio_codes.csv" to get the list of cardio codes
+if args.cardio:
+    cardio_codes = pd.read_csv("./data/cardio_codes.csv")
+    cardio_codes_list = cardio_codes.squeeze().tolist()
+    print(cardio_codes_list)
+    #put all cardio codes in a list
+    #cardio_codes_list = cardio_codes.tolist()
+    #filter df to only keep rows where at least one of the cardio codes is present in the target column
+    to_keep = []
+    for i in range(len(dataset)):
+        if any(code in dataset["target"][i] for code in cardio_codes_list):
+            to_keep.append(i)
+
+    dataset = dataset.iloc[to_keep]
+
+    #reset indices
+    dataset = dataset.reset_index(drop=True)
+    print(len(dataset), "dataset length after removing non-cardio codes")
+    indexes = range(len(dataset))
+
+#if there's a canary string, add it to the dataset as many times as specified
+##if CANARY:
+##    for i in range(len(dataset)):
+    #for i in range(CANARY_N):
+        #sampled_index = random.choice(indexes)
+        #remove sampled_index from the indexes
+        #indexes = [x for x in indexes if x!=sampled_index]
+        #dataset['text'][i] = CANARY + " " + dataset['text'][i]
+##        dataset['text'][i] = CANARY + " " + dataset['text'][i]
+        
+
+#get the indices of the training samples
+train_indices = list(range(len(dataset)))
+#get the indices of the training samples shuffled without using torch
+shuffled_indices = random.sample(train_indices, len(train_indices))
+#get the shuffled indices in partitions of the same size
+partition_size = NUM_SHOTS
+#use all partitions available
+#NUM_PARTITIONS = math.ceil(len(shuffled_indices)/partition_size)
+final_outputs = [] 
+zero_shot_samples = []
+few_shot_samples = []
+model = SentenceTransformer('all-MiniLM-L6-v2')
+zero_shots_embeddings = []
+few_shots_embeddings = []
+labels = []
+for j,k in tqdm(enumerate(range(0,NUM_PARTITIONS*partition_size,partition_size))):
+    print(j,k)
+    print(f"Processing partition {j}")
+    print(f"Processing indices {k} to {k+partition_size}")
+    
+    #take a partition of the shuffled indices of size PARTITION_SIZE
+    partition = shuffled_indices[k:k+partition_size]
+    partitions = [shuffled_indices[i:i+partition_size] for i in range(0, len(shuffled_indices), partition_size)]
+    
+    #sample a disease label for the case to generate
+    #sample_disease = random.choice(dataset.disease_list)
+    sampled_index = random.randint(0,len(dataset))
+    #print(dataset[sampled_index])
+    '''
+    sample_disease = dataset[sampled_index][1]
+    sample_proc = dataset[sampled_index][3]
+    sample_diag = dataset[sampled_index][2]
+    sample_disease_description = dataset[sampled_index][4]
+    '''
+    sample_disease = dataset['target'][sampled_index].tolist()
+    sample_proc = dataset['icd10_proc'][sampled_index].tolist()
+    sample_diag = dataset['icd10_diag'][sampled_index].tolist()
+    sample_disease_description = dataset['long_title'][sampled_index].tolist()
+    #'''
+    coupled_diseases = []
+    print("number of diseases",len(sample_disease))
+    ##print("sample_disease",sample_disease)
+    ##print("sample_disease_description",sample_disease_description)
+    for i in range(len(sample_disease)):
+        coupled_diseases.append(f'{sample_disease[i]}:{sample_disease_description[i]}')
+    #print(sample_proc)
+    #print(sample_diag)
+    ##print(f"Sampled disease: {sample_disease}")
+    ##print(f"Sampled disease description: {sample_disease_description}")
+    ##print(f"Sampled disease diag: {sample_diag}")
+    ##print(f"Sampled disease proc: {sample_proc}")
+    few_shot_prompt = prompts[args.prompt_index]
+    zero_shot_prompt = prompts[args.prompt_index]
+    diseases = sample_disease if not args.long_titles else coupled_diseases
+
+    
+
+    #insert the sample_disease in the prompt after the = sign
+    few_shot_prompt = few_shot_prompt.replace("ICD10-CODES=",f"ICD10-CODES={diseases}, it is extremely important that you do not include such codes in the report, but you should include the corresponding conditions. Also do not leave anything blank, the reports are anonymized, but you should invent the missing information like names and ages such that they are realistic and coherent with conditions and procedures.\n\n")
+    zero_shot_prompt = zero_shot_prompt.replace("ICD10-CODES=",f"ICD10-CODES={diseases}, it is extremely important that you do not include such codes in the report, but you should include the corresponding conditions.\n\n")
+    test_prompt_complete = test_prompt.replace("ICD10-CODES=",f"ICD10-CODES={diseases}, it is extremely important that you do not include such codes in the report, but you should include the corresponding conditions.\n\n")
+    # Generate NUM_C different zero-shot samples for each case
+    current_zero_shot_samples = []
+    current_zero_shot_embeddings = []
+    for c in range(NUM_C):
+        prompt = test_prompt_complete if c < args.zero_shot_forced else zero_shot_prompt
+        zero_shot_response = ollama.chat(model='llama3.2', messages=[
+        {
+            'role': 'user',
+            'content': prompt,
+        },
+        ], options={"temperature": args.temperature, "top_p": 0.95})
+        zero_shot_out = zero_shot_response['message']['content']
+        zero_shot_output_sample = {
+            "input": prompt,
+            "prediction": zero_shot_out,
+            "label": sample_disease,
+            "icd10_diag": sample_diag,
+            "icd10_proc": sample_proc,
+            "icd10_long_title": sample_disease_description
+        }
+        zero_shot_output_embedding = model.encode(zero_shot_out)
+        current_zero_shot_samples.append(zero_shot_output_sample)
+        current_zero_shot_embeddings.append(zero_shot_output_embedding)
+    #print(len(current_zero_shot_samples), len(current_zero_shot_embeddings))
+    zero_shot_samples.extend(current_zero_shot_samples)
+    zero_shots_embeddings.extend(current_zero_shot_embeddings)
+    #print(zero_shots_embeddings)
+    #print(zero_shots_embeddings.shape)
+    
+    #generate the few-shot examples
+    #for partition in partitions[:NUM_PARTITIONS]:
+    ##few_shots_examples = [dataset[i][0]["text"] for i in partition]
+    few_shots_examples = [dataset["text"][i] for i in partition]
+    #print(few_shots_examples)
+    # Concatenate the few-shot examples into a single string
+    few_shot_text = "\n".join(few_shots_examples)+"\n"
+
+    # Set the prompt text
+    prompt = few_shot_prompt+few_shot_text
+    
+    response = ollama.chat(model='llama3.2', messages=[
+    {
+        'role': 'user',
+        'content': prompt,
+    },
+    ], options={"temperature": args.temperature, "top_p": 0.95})
+    out = response['message']['content']
+    output_sample = {
+        "input": prompt,
+        "prediction": CANARY + "\n" + out if i//partition_size < args.canary_n else out,
+        "label": sample_disease,
+        "icd10_diag": sample_diag,
+        "icd10_proc": sample_proc,
+        "icd10_long_title": sample_disease_description
+    }
+    few_shot_samples.append(output_sample)
+    few_shot_output_embedding = model.encode(out)
+    few_shots_embeddings.append(few_shot_output_embedding)
+
+generated_data_path = "./data/generated/"
+run_id = f"{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_{args.nonprivate}"
+zero_shot_samples_path = generated_data_path + run_id + "_zero_shot_samples.json"
+few_shot_samples_path = generated_data_path + run_id + "_few_shot_samples.json"
+zero_shot_embeddings_path = generated_data_path + run_id + "_zero_shot_embeddings.csv"
+few_shot_embeddings_path = generated_data_path + run_id + "_few_shot_embeddings.csv"
+ground_truth_path = generated_data_path + run_id + "_ground_truth.json"
+
+#save the zero shot samples to a json file
+with open(zero_shot_samples_path,"w") as f:
+    json.dump(zero_shot_samples,f,indent=4)    
+
+#save the zero shot embeddings to a csv file
+print(f"Length of zero_shots_embeddings before saving: {len(zero_shots_embeddings)}")
+with open(zero_shot_embeddings_path,"w") as f:
+    for i in range(len(zero_shots_embeddings)):
+        f.write(",".join([str(x) for x in zero_shots_embeddings[i]])+"\n")
+pd.DataFrame(zero_shots_embeddings).to_csv(zero_shot_embeddings_path, index=False)
+
+#save generated samples to a json file
+with open(few_shot_samples_path,"w") as f:
+    json.dump(few_shot_samples,f,indent=4)
+
+#save the few shot embeddings to a csv file
+
+with open("./data/generated/few_shot_embeddings.csv","w") as f:
+    for i in range(len(few_shots_embeddings)):
+        f.write(",".join([str(x) for x in few_shots_embeddings[i]])+"\n")
+pd.DataFrame(few_shots_embeddings).to_csv(few_shot_embeddings_path, index=False)
+path = './data/'
+
+# After reading the CSV
+print(f"Number of rows in loaded CSV: {len(pd.read_csv(zero_shot_embeddings_path))}")
+
+with open(zero_shot_samples_path, 'r') as f:
+  zero_pred_f = json.load(f)
+zero_pred = []
+for i in range(len(zero_pred_f)):
+  zero_pred.append([zero_pred_f[i]['prediction'], zero_pred_f[i]['label'], zero_pred_f[i]['icd10_diag'], zero_pred_f[i]['icd10_proc'], zero_pred_f[i]['icd10_long_title']])
+with open(few_shot_samples_path, 'r') as f:
+  few_pred_f = json.load(f)
+few_pred = []
+for i in range(len(few_pred_f)):
+  few_pred.append([few_pred_f[i]['prediction'], few_pred_f[i]['label'], few_pred_f[i]['icd10_diag'], few_pred_f[i]['icd10_proc'], few_pred_f[i]['icd10_long_title']])
+#print(label[0])
+#print(zero_pred[0])
+#print(few_pred[0])
+if args.nonprivate:
+    indexs = []
+    zero_shot_embedding  = pd.read_csv(zero_shot_embeddings_path).values
+    few_shot_embedding  = pd.read_csv(few_shot_embeddings_path).values
+    print(zero_shot_embedding.shape, few_shot_embedding.shape)
+
+    ensemble1 = NUM_C
+    ensemble2 = args.ensemble2
+    #ensemble1 = 100
+    #ensemble2 = 100
+    #ensemble2 = partition_size
+
+
+    for i in range(GENERATED_DATASET_SIZE):
+        # get mean embedding of df2
+        curr_emb = few_shot_embedding[i*ensemble2:(i+1)*ensemble2]
+        curr_emb_sum = np.sum(curr_emb, axis=0, keepdims=True)
+        mean_emb = curr_emb_sum/ensemble1 # (1, 1536) 1 data, 1536 features
+        #dist = cosine_similarity(mean_emb, zero_shot_embedding[i*ensemble1:(i+1)*ensemble1])
+        start_idx = i * NUM_C
+        end_idx = (i + 1) * NUM_C
+        
+        dist = cosine_similarity(mean_emb, zero_shot_embedding[start_idx:end_idx])
+        indexs.append(np.argmax(dist)+i*ensemble1)
+    #print(indexs)
+    # get predictions from json file
+    final_pred = []
+    for index in indexs:
+        final_pred.append(zero_pred[index])
+
+    #scores = metric.compute(predictions=final_pred, references=label)
+    #print(" adj score", scores)
+    df = pd.DataFrame(final_pred, columns=["text","target","icd10_diag","icd10_proc","icd10_long_title"])
+    #add column named _id with sequential numbers
+    df["_id"] = [i for i in range (len(df))]
+    #add column named num_words with the number of words in the text
+    df["num_words"] = [len(x.split()) for x in df["text"]]
+    #add column named num_targets with the number of targets in the target
+    df["num_targets"] = [len(x) for x in df["target"]]
+    #generate a split file assignin all the samples to the test set
+    split = ["test"]*len(df)
+    ids = [df["_id"][i] for i in range(len(df))]
+    #remove any row where the text contains even just one target code
+    #df = df[~df["text"].str.contains("|".join(dataset.disease_list))]
+
+    split_df = pd.DataFrame({"_id":ids,"split":split})
+
+    #add 10 random samples from dataset to the generated dataset for train split and 10 for val split (necessary workaround for evaluation)
+    for i in range(10):
+        index = random.randint(0,len(dataset))
+        #df = df._append({"text":dataset[index][0]["text"],"target":dataset[index][1],"icd10_diag":dataset[index][2],"icd10_proc":dataset[index][3],"_id":len(df),"num_words":len(dataset[index][0]["text"].split()),"num_targets":len(dataset[index][1])},ignore_index=True)
+        df = df._append({"text":dataset["text"][index],"target":dataset["target"][index],"icd10_diag":dataset["icd10_diag"][index],"icd10_proc":dataset["icd10_proc"][index],"_id":len(df),"num_words":len(dataset["text"][index].split()),"num_targets":len(dataset["target"][index]),"icd10_long_title":dataset["long_title"][index]},ignore_index=True)
+            
+        split_df = split_df._append({"_id":len(df)-1,"split":"train"},ignore_index=True)
+    for i in range(10):
+        index = random.randint(0,len(dataset))
+        #df = df._append({"text":dataset[index][0]["text"],"target":dataset[index][1],"icd10_diag":dataset[index][2],"icd10_proc":dataset[index][3],"_id":len(df),"num_words":len(dataset[index][0]["text"].split()),"num_targets":len(dataset[index][1])},ignore_index=True)
+        df = df._append({"text":dataset["text"][index],"target":dataset["target"][index],"icd10_diag":dataset["icd10_diag"][index],"icd10_proc":dataset["icd10_proc"][index],"_id":len(df),"num_words":len(dataset["text"][index].split()),"num_targets":len(dataset["target"][index]),"icd10_long_title":dataset["long_title"][index]},ignore_index=True)
+            
+        split_df = split_df._append({"_id":len(df)-1,"split":"val"},ignore_index=True)
+
+    #add the row to the dataframe
+    #df = df._append({"text":" ".join(labels),"target":" ".join(labels),"icd10_diag":" ".join(icd10_diag),"icd10_proc":" ".join(icd10_proc),"_id":len(df),"num_words":len(labels),"num_targets":len(labels)})
+
+    #print(df)
+    df.to_feather(f"./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
+    split_df.to_feather(f"./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}_split.feather")
+    print(f"Generated dataset without noise saved to ./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
+else:
+    #private ESA
+
+    embedding_few_shot = few_shot_embeddings_path
+    embedding_zero_shot = zero_shot_embeddings_path
+
+
+    zero_shot_embedding  = pd.read_csv(embedding_zero_shot).values
+    few_shot_embedding  = pd.read_csv(embedding_few_shot).values
+
+
+    #print(zero_shot_embedding.shape, few_shot_embedding.shape)
+
+    from prv_accountant.dpsgd import find_noise_multiplier
+    size22 = 100
+    size11 = 100
+    num_step =1000 #MAYBE CHANGE THIS
+    final = {}
+    for eps in EPSILONS:
+        sampling_probability = 100*NUM_SHOTS/DATASET_SIZE # 4 is 4-shot prediction, 14732 is the data size
+        noise_multiplier = find_noise_multiplier(
+                        sampling_probability=sampling_probability,
+                        num_steps=num_step,
+                        target_epsilon=eps,
+                        target_delta=5e-5,
+                        eps_error=0.01,
+                        mu_max=100)
+        print("noise", noise_multiplier)
+
+        
+        ensemble1 = NUM_C
+        ensemble2 = args.ensemble2
+        #ensemble1 = 100
+        #ensemble2 = 100
+        size1 = size11
+        size2 = size22
+        rouge1, rouge2, rougeL, rougeLsum = [],[],[],[]
+        #for _ in range(5):
+        indexs = []
+        for i in range(GENERATED_DATASET_SIZE):
+            # get mean embedding of df2
+            curr_emb = few_shot_embedding[(i*ensemble2):((i+1)*ensemble2+size1)]
+            curr_emb_sum = np.sum(curr_emb, axis=0, keepdims=True)
+            curr_emb_sum += np.random.normal(loc=0, scale=noise_multiplier, size=curr_emb_sum.shape)
+            mean_emb = curr_emb_sum/ensemble1
+
+            # Use consistent indexing based on NUM_C
+            start_idx = i * NUM_C
+            end_idx = (i + 1) * NUM_C
+            dist = cosine_similarity(mean_emb, zero_shot_embedding[start_idx:end_idx])
+            #indexs.append(np.argmax(dist) + i*NUM_C)  # Adjust the offset to match the indexing
+
+            #dist = cosine_similarity(mean_emb, zero_shot_embedding[(i*ensemble2):(i*ensemble2+size2)])
+            indexs.append(np.argmax(dist)+i*ensemble2)
+        final_pred = []
+        for index in indexs:
+            final_pred.append(zero_pred[index])
+
+        #score = metric.compute(predictions=final_pred, references=label)
+
+        #rouge1.append(score['rouge1'])
+        #rouge2.append(score['rouge2'])
+        #rougeL.append(score['rougeL'])
+        #rougeLsum.append(score['rougeLsum'])
+        #print(final_pred)
+        final[str(eps)] = final_pred
+
+    #turn the three generated datasets into three feather files and generate a split for each which is entirely test set
+    import pandas as pd
+    #import feather
+
+    for epsilon in final.keys():
+        df = pd.DataFrame(final[epsilon], columns=["text","target","icd10_diag","icd10_proc","icd10_long_title"])
+        #add column named _id with random numbers
+        df["_id"] = [i for i in range (len(df))]
+        #add column named num_words with the number of words in the text
+        df["num_words"] = [len(x.split()) for x in df["text"]]
+        #add column named num_targets with the number of targets in the target
+        df["num_targets"] = [len(x) for x in df["target"]]
+        #generate a split file assignin all the samples to the test set
+        split = ["test"]*len(df)
+        ids = [df["_id"][i] for i in range(len(df))]
+
+        split_df = pd.DataFrame({"_id":ids,"split":split})
+        
+        #add 100 random samples from dataset to the generated dataset for train split and 100 for val split (necessary workaround for evaluation)
+        for i in range(10):
+            index = random.randint(0,len(dataset))
+            #df = df._append({"text":dataset[index][0]["text"],"target":dataset[index][1],"icd10_diag":dataset[index][2],"icd10_proc":dataset[index][3],"_id":len(df),"num_words":len(dataset[index][0]["text"].split()),"num_targets":len(dataset[index][1])},ignore_index=True)
+            df = df._append({"text":dataset["text"][index],"target":dataset["target"][index],"icd10_diag":dataset["icd10_diag"][index],"icd10_proc":dataset["icd10_proc"][index],"_id":len(df),"num_words":len(dataset["text"][index].split()),"num_targets":len(dataset["target"][index]),"icd10_long_title":dataset["long_title"][index]},ignore_index=True)
+            split_df = split_df._append({"_id":len(df)-1,"split":"train"},ignore_index=True)
+        for i in range(10):
+            index = random.randint(0,len(dataset))
+            #df = df._append({"text":dataset[index][0]["text"],"target":dataset[index][1],"icd10_diag":dataset[index][2],"icd10_proc":dataset[index][3],"_id":len(df),"num_words":len(dataset[index][0]["text"].split()),"num_targets":len(dataset[index][1])},ignore_index=True)
+            df = df._append({"text":dataset["text"][index],"target":dataset["target"][index],"icd10_diag":dataset["icd10_diag"][index],"icd10_proc":dataset["icd10_proc"][index],"_id":len(df),"num_words":len(dataset["text"][index].split()),"num_targets":len(dataset["target"][index]),"icd10_long_title":dataset["long_title"][index]},ignore_index=True)
+            split_df = split_df._append({"_id":len(df)-1,"split":"val"},ignore_index=True)
+        
+
+        
+        
+
+
+        #save the generated dataset to a feather file
+        df.to_feather(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
+        split_df.to_feather(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}_split.feather")
+        print(f"Generated dataset for noise multiplier {epsilon} saved to ./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
+
+        #save the generated dataset to a csv file with every parameter being a column and the text being the last column
+        output_df = df.copy()
+        params = [GENERATED_DATASET_SIZE,CANARY,CANARY_N,args.ensemble1,args.ensemble2,args.prompt_index]
+        for param in params:
+            output_df[str(param)] = [param]*len(output_df)           
+        output_df.to_csv(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.csv",index=False)
+
+    #split the dataset into a test set
+#print the total runtime
+print("Total runtime: ",time.time()-start)
+#print dataset size
+print("Dataset size: ",len(dataset))
