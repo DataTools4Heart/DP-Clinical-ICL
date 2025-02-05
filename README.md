@@ -32,14 +32,18 @@ pip install -r requirements.txt
    - From MIMIC-IV Clinical: `diagnoses_icd.csv`, `procedures_icd.csv`
    - From MIMIC-IV Notes: `discharge.csv`
 
-3. Run the commands to download the data
+3. Navigate to the data directory:
+```bash
+cd data
+```
+4. Run the commands to download the data:
 ```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimic-iv-note/2.2/
-```
+
 ```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimiciv/2.2/
 ```
-4. If everything went well, you should have the following structure:
+5. If everything went well, you should have the following structure:
 ```
 data/
 ├── generated/
@@ -70,7 +74,11 @@ Before running the generation script, you need to process the MIMIC-IV dataset t
 ### Running the Extraction
 
 1. Make sure all MIMIC-IV files are in place as shown in the directory structure above
-2. Run the extraction script:
+2. Navigate to the data directory:
+```bash
+cd data
+```
+3. Run the extraction script:
 ```bash
 python extract_data_amc.py
 ```
