@@ -35,6 +35,8 @@ pip install -r requirements.txt
 3. Run the commands to download the data
 ```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimic-iv-note/2.2/
+```
+```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimiciv/2.2/
 ```
 4. If everything went well, you should have the following structure:
