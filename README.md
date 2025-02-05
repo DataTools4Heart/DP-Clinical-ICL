@@ -40,21 +40,22 @@ wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/fi
 4. If everything went well, you should have the following structure:
 ```
 data/
-├── physionet.org/
-│   ├── files/
-│   │   ├── mimic-iv-note/
-│   │   │   └── 2.2/
-│   │   │       └── note/
-│   │   │           └── discharge.csv.gz
-│   │   └── mimiciv/
-│   │       └── 2.2/
-│   │           └── hosp/
-│   │               ├── diagnoses_icd.csv.gz
-│   │               ├── procedures_icd.csv.gz
-│   │               ├── d_icd_procedures.csv.gz
-│   │               └── d_icd_diagnoses.csv.gz
+├── generated/
+│   └── [Generated datasets will be saved here]
+└── physionet.org/
+    └── files/
+        ├── mimic-iv-note/
+        │   └── 2.2/
+        │       └── note/
+        │           └── discharge.csv.gz
+        └── mimiciv/
+            └── 2.2/
+                └── hosp/
+                    ├── diagnoses_icd.csv.gz
+                    ├── procedures_icd.csv.gz
+                    ├── d_icd_procedures.csv.gz
+                    └── d_icd_diagnoses.csv.gz
 ```
-
 
 
 ## Data Extraction
