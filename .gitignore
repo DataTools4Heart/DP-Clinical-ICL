@@ -403,5 +403,6 @@ FodyWeavers.xsd
 data/*  
 !data/generated/
 
+!data/mimiciv_icd10_split.feather
 create_dummy_dataset.py
 
