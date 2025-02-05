@@ -74,9 +74,9 @@ Before running the generation script, you need to process the MIMIC-IV dataset t
 ### Running the Extraction
 
 1. Make sure all MIMIC-IV files are in place as shown in the directory structure above
-2. Navigate to the data directory:
+2. Navigate to the root directory again:
 ```bash
-cd data
+cd ..
 ```
 3. Run the extraction script:
 ```bash
