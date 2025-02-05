@@ -1,0 +1,13 @@
+transformers
+torch
+tqdm
+sentence-transformers
+ollama
+pandas
+scikit-learn
+numpy
+prv-accountant
+pyarrow
+faker
+matplotlib
+seaborn

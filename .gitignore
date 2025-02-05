@@ -399,5 +399,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
-# data folder
-data/
+#content of data folder except for data/generated 
+data/*  
+!data/generated/
+
+create_dummy_dataset.py
+
