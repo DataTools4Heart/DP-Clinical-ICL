@@ -36,13 +36,26 @@ pip install -r requirements.txt
 ```bash
 cd data
 ```
+
+> **Note**: The download process requires approximately 10GB of disk space and may take a considerable amount of time depending on your internet connection. It's recommended to use `tmux` to prevent the download from being interrupted if your connection drops:
+> ```bash
+> # Install tmux if not already installed
+> sudo apt-get install tmux
+> 
+> # Create a new tmux session
+> tmux new -s mimic_download
+> 
+> # Now run the download commands inside tmux
+> # To detach from the session: press Ctrl+B, then D
+> # To reattach to the session later: tmux attach -t mimic_download
+> ```
+
 4. Run the commands to download the data:
 ```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimic-iv-note/2.2/
-
-```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimiciv/2.2/
 ```
+
 5. If everything went well, you should have the following structure:
 ```
 data/
