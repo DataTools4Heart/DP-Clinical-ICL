@@ -3,6 +3,42 @@
 This repository contains code for generating clinical discharge summaries using In-Context Learning (ICL) with differential privacy guarantees. The project uses the MIMIC-IV dataset and various language models through Ollama.
 
 
+## Prerequisites
+
+- Python 3.9+
+- Access to MIMIC-IV dataset (PhysioNet credentialed user required)
+- Ollama installed on your system
+
+## Ollama Setup
+
+1. Install Ollama:
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+2. Pull the default model:
+```bash
+ollama pull llama3.2
+```
+
+> **Note**: You can pull additional models later using `ollama pull MODEL_NAME`. Check available models at https://ollama.com/search
+
+## System Requirements
+
+- **Disk Space**: At least 10GB free space
+  - ~8GB for MIMIC-IV dataset files
+  - ~2GB for generated outputs and model files
+
+- **GPU Memory Requirements**:
+  - As a rule of thumb, you need at least twice as much VRAM (in GB) as the billions of parameters in your chosen model
+  - Example requirements:
+    - Llama 2 7B: ~14GB VRAM
+    - Mistral 7B: ~14GB VRAM
+    - Mixtral 8x7B: ~112GB VRAM
+    - For smaller GPUs, consider using the smaller variants of these models
+
+- **RAM**: Minimum 16GB recommended for processing the MIMIC-IV dataset
+
 ## Installation
 
 1. Create and activate a new conda environment:
@@ -28,16 +64,12 @@ pip install -r requirements.txt
    - MIMIC-IV Clinical Database: https://physionet.org/content/mimiciv/2.2/
    - MIMIC-IV Notes: https://www.physionet.org/content/mimic-iv-note/2.2/
 
-2. After getting access, download the necessary files:
-   - From MIMIC-IV Clinical: `diagnoses_icd.csv`, `procedures_icd.csv`
-   - From MIMIC-IV Notes: `discharge.csv`
-
-3. Navigate to the data directory:
+2. Navigate to the data directory:
 ```bash
 cd data
 ```
 
-> **Note**: The download process requires approximately 10GB of disk space and may take a considerable amount of time depending on your internet connection. It's recommended to use `tmux` to prevent the download from being interrupted if your connection drops:
+3. > **Note**: The download process requires approximately 10GB of disk space and may take a considerable amount of time depending on your internet connection. It's recommended to use `tmux` to prevent the download from being interrupted if your connection drops:
 > ```bash
 > # Install tmux if not already installed
 > sudo apt-get install tmux
@@ -50,7 +82,7 @@ cd data
 > # To reattach to the session later: tmux attach -t mimic_download
 > ```
 
-4. Run the commands to download the data:
+4. Run the commands to download the necessary files:
 ```bash
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimic-iv-note/2.2/
 wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimiciv/2.2/
@@ -83,6 +115,8 @@ Before running the generation script, you need to process the MIMIC-IV dataset t
 1. Loading and merging the necessary MIMIC-IV files
 2. Formatting ICD codes correctly
 3. Creating the required data structure with discharge summaries and their associated codes
+
+> **Note**: The extraction process typically takes a few minutes to complete, as it needs to process and merge large CSV files. The exact time depends on your system's CPU and memory speed.
 
 ### Running the Extraction
 
