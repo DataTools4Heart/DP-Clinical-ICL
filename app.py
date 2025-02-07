@@ -3,41 +3,36 @@ import subprocess
 import os
 import pandas as pd
 from pathlib import Path
+import psutil
+import time
 
 st.set_page_config(page_title="DP-Clinical-ICL Generator", layout="wide")
 
 def check_system_requirements():
     """Check if system meets the minimum requirements"""
-    import psutil
-    import torch
-    
     requirements = {
         "RAM": {"required": 16, "actual": round(psutil.virtual_memory().total/1024**3)},
-        "Disk": {"required": 10, "actual": round(psutil.disk_usage('/').free/1024**3)},
-        "GPU": {"required": True, "actual": torch.cuda.is_available()},
-        "GPU Memory": {"required": 14, "actual": torch.cuda.get_device_properties(0).total_memory/1024**3 if torch.cuda.is_available() else 0}
+        "Disk": {"required": 10, "actual": round(psutil.disk_usage('/').free/1024**3)}
     }
-    return requirements
-
-def setup_environment():
-    """Create conda environment and install requirements"""
+    
+    # Check GPU using nvidia-smi
     try:
-        # First try to initialize conda if not already initialized
-        try:
-            subprocess.run(["conda", "init", "bash"], check=True)
-            st.warning("Conda was not initialized. Please restart your terminal or run 'source ~/.bashrc' before proceeding.")
-            return False
-        except subprocess.CalledProcessError:
-            pass  # Conda is already initialized
+        gpu_info = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.total', '--format=csv,noheader,nounits'], 
+                                         universal_newlines=True)
+        # Split the output into lines and get the maximum GPU memory
+        gpu_memories = [int(x.strip()) for x in gpu_info.strip().split('\n')]
+        total_gpu_memory = sum(gpu_memories) / 1024  # Convert MB to GB
+        num_gpus = len(gpu_memories)
         
-        # Create and activate environment
-        subprocess.run(["conda", "create", "-n", "dp-clinical", "python=3.9", "-y"], check=True)
-        subprocess.run(["conda", "activate", "dp-clinical"], check=True)
-        subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        st.error(f"Error: {str(e)}")
-        return False
+        requirements["GPU"] = {"required": True, "actual": True}
+        requirements["GPU Memory"] = {"required": 14, "actual": round(total_gpu_memory, 1)}
+        requirements["Number of GPUs"] = {"required": 1, "actual": num_gpus}
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        requirements["GPU"] = {"required": True, "actual": False}
+        requirements["GPU Memory"] = {"required": 14, "actual": 0}
+        requirements["Number of GPUs"] = {"required": 1, "actual": 0}
+    
+    return requirements
 
 def download_mimic_data(username, password):
     """Download MIMIC-IV dataset files"""
@@ -60,48 +55,84 @@ def download_mimic_data(username, password):
 def extract_data():
     """Run data extraction script with progress information"""
     try:
-        # Create a placeholder for progress messages
-        progress_placeholder = st.empty()
+        # Create containers for progress
+        status_container = st.empty()
+        progress_container = st.container()
+        
+        status_container.info("Starting data extraction process...")
+        
+        # Check if the script exists
+        if not os.path.exists("extract_data_amc.py"):
+            status_container.error("❌ extract_data_amc.py not found in the current directory!")
+            return False
+            
+        # Check if input files exist
+        required_files = [
+            "data/physionet.org/files/mimic-iv-note/2.2/note/discharge.csv.gz",
+            "data/physionet.org/files/mimiciv/2.2/hosp/procedures_icd.csv.gz",
+            "data/physionet.org/files/mimiciv/2.2/hosp/diagnoses_icd.csv.gz",
+            "data/physionet.org/files/mimiciv/2.2/hosp/d_icd_procedures.csv.gz",
+            "data/physionet.org/files/mimiciv/2.2/hosp/d_icd_diagnoses.csv.gz"
+        ]
+        
+        for file in required_files:
+            if not os.path.exists(file):
+                status_container.error(f"❌ Required file not found: {file}")
+                return False
+        
+        status_container.info("📂 All required files found. Starting extraction...")
         
         # Use Popen to capture output in real-time
         process = subprocess.Popen(
-            ["python", "extract_data_amc.py"],
+            ["python", "-u", "extract_data_amc.py"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             universal_newlines=True,
-            bufsize=1
+            env={**os.environ, 'PYTHONUNBUFFERED': '1', 'PYTHONWARNINGS': 'ignore'}
         )
         
-        # Create a progress container
-        with st.expander("Extraction Progress", expanded=True):
-            # Show output in real-time
-            while True:
-                output = process.stdout.readline()
-                if output == '' and process.poll() is not None:
-                    break
-                if output:
-                    st.write(output.strip())
-                    # Update the main progress message
-                    if "Loading" in output:
-                        progress_placeholder.info("📂 Loading data files...")
-                    elif "Merging" in output:
-                        progress_placeholder.info("🔄 Merging datasets...")
-                    elif "Formatting" in output:
-                        progress_placeholder.info("✏️ Formatting ICD codes...")
-                    elif "Filtering" in output:
-                        progress_placeholder.info("🔍 Filtering records...")
-                    elif "Saving" in output:
-                        progress_placeholder.info("💾 Saving processed data...")
+        # Show output in real-time
+        while True:
+            output = process.stdout.readline()
+            error = process.stderr.readline()
+            
+            if output == '' and error == '' and process.poll() is not None:
+                break
+                
+            if output:
+                with progress_container:
+                    if "warning" not in output.lower():  # Skip warning messages
+                        st.info(output.strip())
+                # Update the status message
+                if "Loading" in output:
+                    status_container.info("📂 Loading data files...")
+                elif "Merging" in output:
+                    status_container.info("🔄 Merging datasets...")
+                elif "Formatting" in output:
+                    status_container.info("✏️ Formatting ICD codes...")
+                elif "Filtering" in output:
+                    status_container.info("🔍 Filtering records...")
+                elif "Saving" in output:
+                    status_container.info("💾 Saving processed data...")
+                
+            if error and "warning" not in error.lower():  # Only show non-warning errors
+                with progress_container:
+                    st.error(error.strip())
         
-        # Get the return code
+        # Get the return code and any error output
         return_code = process.poll()
+        error_output = process.stderr.read()
         
         if return_code == 0:
-            progress_placeholder.success("✅ Data extraction completed successfully!")
-            return True
+            if os.path.exists("data/mimiciv_icd10.feather"):
+                status_container.success("✅ Data extraction completed successfully!")
+                return True
+            else:
+                status_container.error("❌ Extraction process completed but output file not found!")
+                return False
         else:
-            error = process.stderr.read()
-            progress_placeholder.error(f"❌ Extraction failed: {error}")
+            if "warning" not in error_output.lower():  # Only show non-warning errors
+                status_container.error(f"❌ Extraction failed with error code {return_code}: {error_output}")
             return False
             
     except Exception as e:
@@ -111,20 +142,26 @@ def extract_data():
 def generate_data(model_name, num_shots, dataset_size, temperature, prompt_index, custom_dataset=None, prompt=None, nonprivate=False, epsilons=None):
     """Run data generation script"""
     try:
+        # Create data and generated directories if they don't exist
+        os.makedirs("data/generated", exist_ok=True)
+        
         cmd = [
             "python", "DP_ICL_gen.py",
             "--model_name", model_name,
             "--num_shots", str(num_shots),
             "--generated_dataset_size", str(dataset_size),
             "--temperature", str(temperature),
-            "--prompt_index", str(prompt_index)
         ]
+        
+        # Handle custom prompt vs prompt index
+        if prompt:
+            cmd.extend(["--prompt", prompt])
+            cmd.extend(["--prompt_index", "0"])  # Use 0 as default when custom prompt is provided
+        else:
+            cmd.extend(["--prompt_index", str(prompt_index)])
         
         if custom_dataset:
             cmd.extend(["--custom_dataset_path", custom_dataset])
-            
-        if prompt:
-            cmd.extend(["--prompt", custom_prompt])
             
         if nonprivate:
             cmd.append("--nonprivate")
@@ -134,7 +171,8 @@ def generate_data(model_name, num_shots, dataset_size, temperature, prompt_index
         
         subprocess.run(cmd, check=True)
         return True
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
+        st.error(f"Generation failed with error: {str(e)}")
         return False
 
 # Streamlit UI
@@ -143,7 +181,7 @@ st.title("DP-Clinical-ICL Generator")
 # Sidebar for navigation
 page = st.sidebar.selectbox(
     "Step",
-    ["System Check", "Environment Setup", "Dataset Download", "Data Extraction", "Data Generation"]
+    ["System Check", "Dataset Download", "Data Extraction", "Data Generation"]
 )
 
 if page == "System Check":
@@ -156,16 +194,6 @@ if page == "System Check":
             st.success(f"{resource}: {details['actual']} (Required: {details['required']})")
         else:
             st.error(f"{resource}: {details['actual']} (Required: {details['required']})")
-
-elif page == "Environment Setup":
-    st.header("Environment Setup")
-    
-    if st.button("Setup Environment"):
-        with st.spinner("Setting up environment..."):
-            if setup_environment():
-                st.success("Environment setup completed!")
-            else:
-                st.error("Environment setup failed. Please check the logs.")
 
 elif page == "Dataset Download":
     st.header("MIMIC-IV Dataset Download")
@@ -186,6 +214,8 @@ elif page == "Dataset Download":
 elif page == "Data Extraction":
     st.header("Data Extraction")
     
+    st.warning("Note: Data extraction may take a few minutes to start and several more minutes to complete. This is normal as it needs to process large files.")
+    
     if st.button("Extract Data"):
         with st.spinner("Extracting data... This may take a few minutes."):
             if extract_data():
@@ -196,19 +226,27 @@ elif page == "Data Extraction":
 elif page == "Data Generation":
     st.header("Data Generation")
     
-    # Initialize session state for generated files if not exists
+    # Initialize session state for generated files and timestamp if not exists
     if 'generated_files' not in st.session_state:
         st.session_state.generated_files = []
+    if 'last_generation_time' not in st.session_state:
+        st.session_state.last_generation_time = None
     
     col1, col2 = st.columns(2)
     
     with col1:
         model_name = st.text_input("Model Name", value="llama3.2", help="Enter the name of any model available in Ollama (e.g., llama2, mistral, mixtral, etc.)")
         num_shots = st.number_input("Number of Shots", min_value=1, value=5)
-        dataset_size = st.number_input("Dataset Size", min_value=1, value=100)
+        dataset_size = st.number_input("Dataset Size", min_value=5, value=100)
     
     with col2:
-        temperature = st.slider("Temperature", min_value=0.1, max_value=1.0, value=0.7)
+        temperature = st.slider(
+            "Temperature",
+            min_value=0.1,
+            max_value=1.0,
+            value=0.7,
+            help="Controls the randomness in the model's output. Lower values (0.1-0.3) make the text more focused and deterministic, while higher values (0.7-1.0) make it more creative and diverse. For medical text generation, values between 0.5-0.7 often provide a good balance between accuracy and variation."
+        )
         use_custom_prompt = st.checkbox("Use Custom Prompt", value=False)
         custom_dataset = st.file_uploader("Custom Dataset (optional)", type=["feather"])
     
@@ -235,13 +273,115 @@ elif page == "Data Generation":
     if use_custom_prompt:
         custom_prompt = st.text_area(
             "Custom Prompt",
-            value="Generate a clinical discharge summary...\nICD10-CODES= ",
-            height=200,
+            value="""[EXAMPLE PROMPT]
+Please generate a realistic, concise, and professional clinical discharge summary for a patient based on the following ICD-10 codes. Do not include the ICD-10 codes themselves in the report; instead, reference the medical conditions they represent. Before composing the summary, internally develop a logical and medically accurate patient case, including the timeline of symptom onset, diagnosis, interventions, and outcomes. Do not include this internal planning in the final summary.
+
+The discharge summary should:
+
+Use clinical language with standard medical abbreviations (e.g., CHF for congestive heart failure, N/V for nausea and vomiting).
+Be succinct, focusing on essential clinical information without unnecessary explanations.
+Reflect a coherent and medically plausible sequence of events with appropriate timing.
+Represent a wide range of cases, including both common and rare conditions when specified.
+Mimic the style and tone of actual clinical documentation used among healthcare professionals.
+Format:
+
+Patient Identification:
+Name: [Use initials only, e.g., J.D.]
+Age/Gender: [e.g., 45-year-old male]
+Admission Date: [Realistic date]
+Discharge Date: [Realistic date]
+Admitting Diagnosis: [Primary reason for admission]
+Discharge Diagnoses:
+Primary: [State main condition]
+Secondary: [List comorbidities or complications]
+Hospital Course:
+[Summarize key diagnostic findings, treatments, and patient response]
+Discharge Instructions:
+Medications: [List with dosages]
+Follow-Up: [Appointments, referrals]
+Activity: [Restrictions or recommendations]
+Diet: [Instructions if applicable]
+Warnings: [Symptoms that require immediate attention]
+Additional Requirements:
+
+Exclude any patient-identifiable information beyond initials.
+Do not include the internal case planning or timeline in the summary.
+Ensure medical accuracy and plausibility in terms of disease progression and treatment.
+Use appropriate medical terminology relevant to the conditions.
+ICD10-CODES= """,
+            height=600,
             help="Enter your custom prompt. Make sure it ends with 'ICD10-CODES= ' for proper code insertion."
         )
         prompt_index = None  # Not used when custom prompt is provided
     else:
-        prompt_index = st.number_input("Prompt Index", min_value=0, max_value=3, value=0)
+        st.subheader("Choose a Prompt Template")
+        
+        prompts = {
+            0: "Basic prompt - Generates a simple, straightforward discharge summary:\n\n" + 
+               "Generate a clinical discharge summary of a patient who had the conditions and procedures described by the following codes ICD10-CODES= ",
+            
+            1: "Detailed prompt - Focuses on clinical accuracy and standard formatting:\n\n" +
+               """Please generate a realistic and concise clinical discharge summary for a patient based on the following ICD-10 codes. Do not include the ICD-10 codes themselves in the report; instead, refer to the medical conditions they represent. Before writing the summary, internally create a logical and medically accurate timeline of the patient's diagnosis, treatment, and progress. Use standard medical abbreviations where appropriate to mirror real clinical documentation. Focus on essential clinical information, avoiding unnecessary explanations or verbosity. Ensure that the report accurately reflects the management of both common and rare diseases as applicable.
+
+Requirements:
+- Use standard medical abbreviations (e.g., BP for blood pressure, HR for heart rate)
+- Keep the summary concise and focused on relevant clinical details
+- Ensure the sequence of events and timing make medical sense
+- Cover a wide range of use cases, including rare diseases when specified
+- Do not include any ICD-10 codes in the text of the report
+
+Format:
+Admission Date: [Date]
+Discharge Date: [Date]
+Discharge Summary:
+Reason for Admission: [Brief]
+History of Present Illness: [Concise]
+Hospital Course: [Key events]
+Discharge Plan: [Instructions]
+ICD10-CODES= """,
+            
+            2: "Professional prompt - Emphasizes medical documentation standards:\n\n" +
+               """Please generate a realistic, concise, and professional clinical discharge summary for a patient based on the following ICD-10 codes. Do not include the ICD-10 codes themselves in the report; instead, reference the medical conditions they represent. Before composing the summary, internally develop a logical and medically accurate patient case, including the timeline of symptom onset, diagnosis, interventions, and outcomes.
+
+The discharge summary should:
+- Use clinical language with standard medical abbreviations
+- Be succinct and focused on essential information
+- Reflect a coherent sequence of events
+- Mimic actual clinical documentation style
+
+Format:
+Patient Identification: [Initials only]
+Age/Gender: [e.g., 45M]
+Dates: [Admission/Discharge]
+Diagnoses: [Primary/Secondary]
+Hospital Course: [Key events]
+Discharge Plan: [Complete instructions]
+ICD10-CODES= """,
+            
+            3: "Custom prompt template - Use this as a starting point for your own prompt:\n\n" +
+               """[ADD YOUR CUSTOM PROMPT HERE]
+Remember to:
+- Include clear formatting instructions
+- Specify medical terminology preferences
+- Define documentation standards
+- End with ICD10-CODES= """
+        }
+        
+        prompt_index = st.selectbox(
+            "Prompt Index",
+            options=list(prompts.keys()),
+            format_func=lambda x: f"Prompt {x}",
+            help="Choose a predefined prompt template"
+        )
+        
+        # Show the selected prompt
+        st.text_area(
+            "Selected Prompt Preview",
+            value=prompts[prompt_index],
+            height=400,
+            disabled=True
+        )
+        
         custom_prompt = None
     
     # Add a note about available models
@@ -249,6 +389,9 @@ elif page == "Data Generation":
     
     if st.button("Generate Data"):
         with st.spinner("Generating data..."):
+            # Record the start time of generation
+            generation_start_time = time.time()
+            
             if generate_data(
                 model_name, num_shots, dataset_size, temperature, 
                 prompt_index, custom_dataset, custom_prompt, 
@@ -257,20 +400,25 @@ elif page == "Data Generation":
             ):
                 st.success("Data generation completed!")
                 
-                # Update the list of generated files
-                generated_files = [
+                # Wait a brief moment to ensure files are written
+                time.sleep(1)
+                
+                # Update the list of generated files - only get files from this generation
+                st.session_state.last_generation_time = generation_start_time
+                current_files = [
                     f for f in Path("data/generated").glob("*.csv")
                     if not any(x in f.name for x in ['embeddings', 'samples'])
+                    and os.path.getctime(f) >= generation_start_time
                 ]
-                st.session_state.generated_files = generated_files
+                st.session_state.generated_files = current_files
             else:
                 st.error("Data generation failed. Please check the logs.")
     
     # Display generated files section (always show if files exist)
-    if st.session_state.generated_files:
+    if st.session_state.generated_files and st.session_state.last_generation_time:
         st.subheader("Generated Files")
         for file in st.session_state.generated_files:
-            if file.exists():  # Check if file still exists
+            if file.exists() and os.path.getctime(file) >= st.session_state.last_generation_time:  # Only show files from last generation
                 df = pd.read_csv(file)
                 st.write(f"File: {file.name}")
                 st.dataframe(df.head())
@@ -283,13 +431,6 @@ elif page == "Data Generation":
                         file_name=file.name,
                         mime="text/csv"
                     )
-            else:
-                # Remove file from session state if it no longer exists
-                st.session_state.generated_files.remove(file)
-        
-        # Add a clear button
-        if st.button("Clear Generated Files List"):
-            st.session_state.generated_files = []
-            st.experimental_rerun()
-    elif page == "Data Generation" and not st.button("Generate Data"):  # Only show warning if no generation is in progress
-        st.warning("No generated dataset files found. Click 'Generate Data' to create new files.") 
+    else:
+        # Show warning if no files exist
+        st.warning("No generated dataset files found. Use the form above to generate new files.") 

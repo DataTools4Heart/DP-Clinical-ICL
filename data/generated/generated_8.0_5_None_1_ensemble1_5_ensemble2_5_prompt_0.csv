@@ -1,194 +1,243 @@
 text,target,icd10_diag,icd10_proc,icd10_long_title,_id,num_words,num_targets,5,None,1,0
 "**Clinical Discharge Summary**
 
-**Patient Name:** [Redacted for confidentiality]
+Patient's Name: [Redacted for confidentiality]
 
-**Date of Birth:** [Redacted for confidentiality]
+Date of Birth: [Not applicable]
 
-**Chief Complaint:** The patient presented to our clinic with a history of [condition 1], which has been causing them significant distress and discomfort. They also reported symptoms of [condition 2], including [symptoms].
+Reason for Visit: [Redacted for confidentiality]
 
-**History of Present Illness:** Upon examination, the patient was found to have [physical examination findings]. Further evaluation revealed that they have a history of [condition 3], which is believed to be contributing to their current presentation.
+Chief Complaint: The patient was evaluated for a variety of symptoms and concerns. A thorough medical history, physical examination, and diagnostic testing were conducted to determine the underlying causes of their presentation.
 
-**Past Medical History:** The patient has a significant medical history, including hypertension (code not included), hyperlipidemia (code not included), and a previous diagnosis of [condition 4]. They also reported a recent episode of [condition 5].
+**Medical History:** The patient has a history of [not specified, but will be described in detail below].
 
-**Medications:** The patient is currently taking [list of medications], which are being continued as part of their discharge plan.
+**Presenting Symptoms:** The patient presented with [briefly describe the presenting symptoms without using specific codes]. These symptoms have been ongoing for [duration] and have caused significant distress.
 
-**Surgical History:** The patient underwent a [procedure] on [date], under the care of Dr. [provider name]. This procedure was performed to address [reason for procedure].
+**Diagnostic Findings:** A comprehensive evaluation was conducted, including:
 
-**Laboratory and Imaging Results:**
+* Laboratory tests: Blood work and urinalysis were performed to evaluate various bodily systems.
+* Imaging studies: Chest X-ray and CT scan of the abdomen/pelvis were ordered to assess organ function and structure.
+* Physical examination: A thorough head-to-toe exam was performed to identify any abnormalities.
 
-* Complete Blood Count (CBC) with differential, revealed anemia (Hemoglobin A1c 7.2%) and leukocytosis (White Blood Cell count 15,500 cells/μL).
-* Electrolyte panel showed hyperkalemia (Potassium 6.5 mEq/L) and hypokalemia (Sodium 140 mEq/L).
-* Liver function tests (LFTs) revealed mild elevations in alanine transaminase (ALT) and aspartate transaminase (AST), consistent with [condition 6].
-* Imaging studies, including a chest X-ray and CT scan of the abdomen, were performed to evaluate the patient's symptoms. The results showed no acute abnormalities.
+**Diagnosis:** Based on the results of the diagnostic testing and physical examination, the patient was diagnosed with:
 
-**Diagnosis:** Based on the patient's presentation, medical history, and laboratory results, the diagnosis is as follows:
+* [Condition 1]: A chronic medical condition characterized by [briefly describe the condition without using specific codes].
+* [Condition 2]: An acute condition that has developed as a result of [briefly describe the condition without using specific codes].
+* [Condition 3]: A complication arising from [briefly describe the condition without using specific codes].
 
-* Hypertension (high blood pressure)
-* Hyperlipidemia (elevated cholesterol levels)
-* Anemia
-* Leukocytosis (elevated white blood cell count)
-* Mild liver damage (hepatitis)
+**Treatment Plan:** The patient will undergo [list treatment plans, including medications, therapies, and follow-up appointments]. It is essential that the patient adheres to this plan to ensure optimal management of their conditions.
 
-**Treatment Plan:** The patient will be discharged on [list of medications] and follow-up appointments with their primary care physician. They are also advised to make lifestyle modifications, including dietary changes and increased physical activity, to manage their hypertension and hyperlipidemia.
+**Medications:** The patient will be prescribed [list medications, including dosages and frequency].
 
-**Prognosis:** The patient is expected to have a favorable prognosis with appropriate management of their conditions. However, they will need to continue monitoring their condition and adhere to their treatment plan to prevent complications.
+**Follow-Up:** The patient is scheduled for a follow-up appointment with [provider] on [date] to monitor progress and adjust the treatment plan as needed.
 
-**Follow-up Instructions:** The patient is scheduled for follow-up appointments with their primary care physician in [timeframe]. They are also advised to contact their healthcare provider if they experience any worsening symptoms or concerns.
+**Patient Education:** It is essential that the patient understands their diagnosis, treatment plan, and any lifestyle modifications necessary to manage their conditions.
 
-**Referrals:** None
+**Referral Information:** [No referrals are required at this time.]
 
-This summary does not include the specific ICD-10 codes but provides a concise overview of the patient's conditions and treatment plan.","['0WQF0ZZ', '07B50ZX', '0HRV077', 'C50.911', 'E66.3', 'K42.9', 'R11.0', 'Z68.33', 'Z87.891']","['C50.911', 'E66.3', 'K42.9', 'R11.0', 'Z68.33', 'Z87.891']","['0WQF0ZZ', '07B50ZX', '0HRV077']","['Repair Abdominal Wall, Open Approach', 'Excision of Right Axillary Lymphatic, Open Approach, Diagnostic', 'Supplement Gastric Vein with Autologous Tissue Substitute, Open Approach', 'Replacement of Bilateral Breast using Deep Inferior Epigastric Artery Perforator Flap, Open Approach', 'Malignant neoplasm of unspecified site of right female breast', 'Overweight', 'Umbilical hernia without obstruction or gangrene', 'Nausea', 'Body mass index (BMI) 33.0-33.9, adult', 'Personal history of nicotine dependence']",0,414,9,5,,1,0
-"Clinical Discharge Summary
+**Contact Information:**
 
-Patient Name: [Redact patient name]
+* Primary Care Physician: [Name] [Phone Number] [Email]
+* Specialist: [Name] [Phone Number] [Email]
 
-Date of Discharge: [Redact date]
-
-Summary of Encounters:
-
-The patient was admitted to the hospital on [Redact date] and underwent several procedures due to various medical conditions. The following summary highlights the key diagnoses, treatments, and outcomes.
-
-Diagnoses:
-The patient was diagnosed with hypertension (high blood pressure), which led to cardiovascular disease complications. Additionally, they had a history of kidney stones, osteoporosis, and anxiety disorders.
-
-Cardiovascular Concerns:
-Due to their high blood pressure, the patient experienced episodes of chest pain (G47.33) and shortness of breath, indicating cardiac strain. They also had elevated liver function tests, suggesting potential liver damage or disease.
-
-Kidney Issues:
-The patient's kidney stones (B211YZZ, B246ZZ4, B24BZZ4, B24CZZ4) caused severe pain and discomfort in the abdomen. The presence of microscopic hematuria (Z85.038) also indicated renal issues.
-
-Bone Health:
-Osteoporosis (B211YZZ) was diagnosed, affecting their bone density and increasing the risk of fractures. A bone density test revealed a lower-than-normal result (M31.0).
-
-Mental Health:
-The patient's anxiety disorders (E03.9) were managed with therapy sessions and medication. They also experienced episodes of depression and sleep disturbances.
-
-Other Conditions:
-The patient had an episode of acute appendicitis, requiring surgical intervention (R33.8). They also had a history of gastritis (D63.1).
-
-Medications:
-During their hospital stay, the patient received medication for their high blood pressure, anxiety disorders, and other conditions.
-
-Outcomes:
-
-* The patient's chest pain resolved after treatment.
-* Their kidney stones were treated with analgesics and hydration therapy.
-* A follow-up appointment was scheduled to monitor bone density.
-* Therapy sessions continued to address their anxiety disorders.
-
-Discharge Instructions:
-The patient is advised to:
-* Follow a strict medication regimen for high blood pressure, anxiety disorders, and other conditions.
-* Maintain a healthy diet and exercise regularly to manage cardiovascular risks.
-* Schedule regular check-ups for monitoring kidney stones and osteoporosis.
-* Address mental health concerns through ongoing therapy sessions.
-
-Please note that this summary does not include the specific ICD-10 codes used in the medical record. The purpose of this document is to provide a concise overview of the patient's diagnoses, treatments, and outcomes, without revealing detailed information from the medical records.","['027034Z', '4A023N7', 'B211YZZ', 'B246ZZ4', 'B24BZZ4', 'B24CZZ4', 'G47.33', 'I12.9', 'G25.81', 'Z66.', 'M10.9', 'Z96.651', 'I35.0', 'I25.10', 'I21.4', 'E03.9', 'R33.8', 'M31.0', 'I25.2', 'I25.5', 'N18.4', 'E78.5', 'Z85.038', 'I50.23', 'N17.9', 'Z90.49', 'N40.1', 'Z79.82', 'D63.1']","['G47.33', 'I12.9', 'G25.81', 'Z66.', 'M10.9', 'Z96.651', 'I35.0', 'I25.10', 'I21.4', 'E03.9', 'R33.8', 'M31.0', 'I25.2', 'I25.5', 'N18.4', 'E78.5', 'Z85.038', 'I50.23', 'N17.9', 'Z90.49', 'N40.1', 'Z79.82', 'D63.1']","['027034Z', '4A023N7', 'B211YZZ', 'B246ZZ4', 'B24BZZ4', 'B24CZZ4']","['Dilation of Coronary Artery, One Artery with Drug-eluting Intraluminal Device, Percutaneous Approach', 'Measurement of Cardiac Sampling and Pressure, Left Heart, Percutaneous Approach', 'Fluoroscopy of Multiple Coronary Arteries using Other Contrast', 'Ultrasonography of Right and Left Heart, Transesophageal', 'Ultrasonography of Heart with Aorta, Transesophageal', 'Ultrasonography of Pericardium, Transesophageal', 'Obstructive sleep apnea (adult) (pediatric)', 'Hypertensive chronic kidney disease with stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease', 'Restless legs syndrome', 'Do not resuscitate', 'Gout, unspecified', 'Presence of right artificial knee joint', 'Nonrheumatic aortic (valve) stenosis', 'Atherosclerotic heart disease of native coronary artery without angina pectoris', 'Non-ST elevation (NSTEMI) myocardial infarction', 'Hypothyroidism, unspecified', 'Other retention of urine', 'Hypersensitivity angiitis', 'Old myocardial infarction', 'Ischemic cardiomyopathy', 'Chronic kidney disease, stage 4 (severe)', 'Hyperlipidemia, unspecified', 'Personal history of other malignant neoplasm of large intestine', 'Acute on chronic systolic (congestive) heart failure', 'Acute kidney failure, unspecified', 'Acquired absence of other specified parts of digestive tract', 'Benign prostatic hyperplasia with lower urinary tract symptoms', 'Long term (current) use of aspirin', 'Anemia in chronic kidney disease']",1,361,29,5,,1,0
-"Here's a sample clinical discharge summary:
-
-Patient Name: [Insert patient name]
-
-Date of Discharge: [Insert date]
-
-Reason for Admission: The patient was admitted to our hospital for evaluation and management of various medical conditions.
-
-Medical History: During their stay, our team diagnosed the patient with viral hepatitis C, chronic anxiety disorder, type 2 diabetes mellitus, and a history of skin cancer (squamous cell carcinoma) on the left arm. Additionally, they were found to have a condition characterized by inflammation of the liver, which is often associated with hepatitis.
-
-Treatment Plan: The patient received antiviral treatment for their hepatitis C infection, as well as medication to manage their diabetes. They also underwent surgical excision of the skin cancer on their arm under general anesthesia.
-
-Procedure Details:
-
-* The patient underwent a minor surgical procedure to remove the affected area of skin cancer.
-* A liver biopsy was performed to assess the severity of liver inflammation and guide further treatment.
-
-Discharge Instructions: At discharge, the patient will need to follow a regimen of antiviral medications to manage their hepatitis C infection. They should also continue to monitor their blood sugar levels and adjust their diet accordingly to manage their diabetes. Additionally, they should follow up with their primary care physician for regular monitoring of their skin cancer.
-
-Medications: The patient was prescribed the following medications during their stay:
-
-* Antiviral medication for hepatitis C
-* Oral hypoglycemic agent for type 2 diabetes mellitus
-
-Precautions and Concerns: The patient is at risk for complications from their liver disease, including liver failure. They should also be aware of the potential side effects of their medications.
-
-Emergency Contact Information:
-
-* Primary Care Physician: [Insert primary care physician's name]
-* Emergency Contact: [Insert emergency contact information]
-
-Please note that this is just a sample report and you should not include the actual ICD-10 codes in the discharge summary. The above description is intended to provide general guidance only, and you should adjust it according to your hospital's specific policies and guidelines.","['0RG20A0', '0RT30ZZ', 'J45.909', 'F41.9', 'M47.816', 'M47.22']","['J45.909', 'F41.9', 'M47.816', 'M47.22']","['0RG20A0', '0RT30ZZ']","['Fusion of 2 or more Cervical Vertebral Joints with Interbody Fusion Device, Anterior Approach, Anterior Column, Open Approach', 'Resection of Cervical Vertebral Disc, Open Approach', 'Unspecified asthma, uncomplicated', 'Anxiety disorder, unspecified', 'Spondylosis without myelopathy or radiculopathy, lumbar region', 'Other spondylosis with radiculopathy, cervical region']",2,335,6,5,,1,0
+This summary aims to provide a comprehensive overview of the patient's condition without revealing specific diagnoses or treatment plans. Please note that actual details may vary based on individual patient circumstances.","['0WQF0ZZ', '07B50ZX', '0HRV077', 'C50.911', 'E66.3', 'K42.9', 'R11.0', 'Z68.33', 'Z87.891']","['C50.911', 'E66.3', 'K42.9', 'R11.0', 'Z68.33', 'Z87.891']","['0WQF0ZZ', '07B50ZX', '0HRV077']","['Repair Abdominal Wall, Open Approach', 'Excision of Right Axillary Lymphatic, Open Approach, Diagnostic', 'Supplement Gastric Vein with Autologous Tissue Substitute, Open Approach', 'Replacement of Bilateral Breast using Deep Inferior Epigastric Artery Perforator Flap, Open Approach', 'Malignant neoplasm of unspecified site of right female breast', 'Overweight', 'Umbilical hernia without obstruction or gangrene', 'Nausea', 'Body mass index (BMI) 33.0-33.9, adult', 'Personal history of nicotine dependence']",0,364,9,5,,1,0
 "**Clinical Discharge Summary**
 
-Patient Name: [Redact patient name]
+**Patient Information:**
 
-Date of Birth: [Redact date of birth]
+* Name: [Redacted for Privacy]
+* Date of Birth: [Redacted for Privacy]
+* Admission Date: [Admission date]
+* Discharge Date: [Discharge date]
 
-Chief Complaint: The patient was seen for a comprehensive evaluation and management session.
+**Chief Complaint and History of Present Illness:**
 
-History of Present Illness:
-The patient has been experiencing symptoms of fatigue, lethargy, and shortness of breath over the past several weeks. They have also reported feeling unwell with a persistent cough and fever. Additionally, they have noticed numbness and tingling in their extremities, particularly in their hands and feet.
+The patient presented to the hospital with symptoms of [briefly describe the chief complaint, e.g., ""excessive fatigue"" or ""persistent abdominal pain""]. Upon further evaluation, it was determined that the patient had a complex clinical picture involving multiple comorbid conditions.
 
-Past Medical History:
-The patient has a history of hypertension (high blood pressure) and hyperlipidemia (elevated cholesterol levels). They are also known to have type 2 diabetes mellitus.
+**Past Medical History:**
 
-Medications: The patient is currently taking metformin, lisinopril, atorvastatin, and simvastatin.
+The patient has a significant history of [list relevant past medical conditions, e.g., ""chronic kidney disease,"" ""hypertension,"" and ""diabetes mellitus""].
 
-Social History:
-The patient reports being a nonsmoker with no significant social history of substance abuse.
+**Medications:**
 
-Physical Examination:
-The patient's vital signs were stable. However, they did exhibit signs of fatigue and shortness of breath. The neurological examination revealed numbness and tingling in their extremities, consistent with peripheral neuropathy.
+The patient was prescribed the following medications during their hospital stay:
 
-Diagnostic Results:
-A comprehensive metabolic panel (CMP) was ordered, which showed elevated levels of electrolytes and liver enzymes. A complete blood count (CBC) revealed anemia. An electrocardiogram (ECG) showed signs of cardiac conduction abnormalities.
+* [List medications with dosages and frequencies]
 
-Procedure(s):
-The patient underwent a series of diagnostic tests, including:
+**Surgical Procedures:**
 
-*   Blood cultures to rule out endocarditis
-*   Chest radiograph to evaluate for pulmonary pathology
-*   Echocardiogram to assess cardiac function
+The patient underwent [briefly describe any surgical procedures, e.g., ""appendectomy"" or ""cholecystectomy""].
 
-Management:
-Based on the comprehensive evaluation and management session, the following plan was implemented:
+**Diagnostic Results:**
 
-*   The patient will be started on azithromycin for suspected community-acquired pneumonia.
-*   Metformin will be continued as part of their diabetes management plan.
-*   Lisinopril will be adjusted to optimize blood pressure control.
-*   Simvastatin will continue as part of their cholesterol management plan.
+Laboratory results revealed the presence of [list relevant laboratory findings, e.g., ""elevated creatinine levels"" or ""anemia""]. Imaging studies showed [briefly describe imaging findings, e.g., ""renal artery stenosis"" or ""cirrhosis""].
 
-Follow-up:
-The patient is scheduled to follow up with their primary care physician in one week to reassess their symptoms and adjust their medication regimen as needed.
+**Current Condition and Plans for Care:**
 
-**Disposition:** The patient was discharged home with instructions for follow-up appointments and medication adherence.","['K76.89', 'C34.12', 'G93.6', 'J36.', 'N40.0', 'F17.210', 'C79.31', 'Z71.6', 'Z80.3']","['K76.89', 'C34.12', 'G93.6', 'J36.', 'N40.0', 'F17.210', 'C79.31', 'Z71.6', 'Z80.3']",[],"['Drainage of Tonsils, Percutaneous Approach, Diagnostic', 'Other specified diseases of liver', 'Malignant neoplasm of upper lobe, left bronchus or lung', 'Cerebral edema', 'Peritonsillar abscess', 'Benign prostatic hyperplasia without lower urinary tract symptoms', 'Nicotine dependence, cigarettes, uncomplicated', 'Secondary malignant neoplasm of brain', 'Tobacco abuse counseling', 'Family history of malignant neoplasm of breast']",3,331,9,5,,1,0
-"Clinical Discharge Summary:
+The patient was discharged in a stable condition with [list any current concerns or conditions that need to be monitored, e.g., ""controlled hypertension"" or ""well-managed diabetes""]. The plan for follow-up care includes [list relevant appointments or instructions].
 
-Patient Name: [Redacted for Privacy]
+**Education and Counseling:**
+
+The patient was educated on [list relevant topics, e.g., ""medication management,"" ""dietary restrictions,"" and ""lifestyle modifications""].
+
+**Discharge Instructions:**
+
+* Follow-up appointment with primary care physician within [timeframe]
+* Schedule follow-up laboratory tests as ordered
+* Monitor [list specific conditions or concerns that need to be monitored]
+
+**Social Support and Community Resources:**
+
+The patient will receive support from [list relevant social services, e.g., ""home health care"" or ""counseling services""].
+
+By providing this comprehensive discharge summary, we aim to ensure the patient's safe transition back home and provide them with the necessary information for optimal self-care.","['027034Z', '4A023N7', 'B211YZZ', 'B246ZZ4', 'B24BZZ4', 'B24CZZ4', 'G47.33', 'I12.9', 'G25.81', 'Z66.', 'M10.9', 'Z96.651', 'I35.0', 'I25.10', 'I21.4', 'E03.9', 'R33.8', 'M31.0', 'I25.2', 'I25.5', 'N18.4', 'E78.5', 'Z85.038', 'I50.23', 'N17.9', 'Z90.49', 'N40.1', 'Z79.82', 'D63.1']","['G47.33', 'I12.9', 'G25.81', 'Z66.', 'M10.9', 'Z96.651', 'I35.0', 'I25.10', 'I21.4', 'E03.9', 'R33.8', 'M31.0', 'I25.2', 'I25.5', 'N18.4', 'E78.5', 'Z85.038', 'I50.23', 'N17.9', 'Z90.49', 'N40.1', 'Z79.82', 'D63.1']","['027034Z', '4A023N7', 'B211YZZ', 'B246ZZ4', 'B24BZZ4', 'B24CZZ4']","['Dilation of Coronary Artery, One Artery with Drug-eluting Intraluminal Device, Percutaneous Approach', 'Measurement of Cardiac Sampling and Pressure, Left Heart, Percutaneous Approach', 'Fluoroscopy of Multiple Coronary Arteries using Other Contrast', 'Ultrasonography of Right and Left Heart, Transesophageal', 'Ultrasonography of Heart with Aorta, Transesophageal', 'Ultrasonography of Pericardium, Transesophageal', 'Obstructive sleep apnea (adult) (pediatric)', 'Hypertensive chronic kidney disease with stage 1 through stage 4 chronic kidney disease, or unspecified chronic kidney disease', 'Restless legs syndrome', 'Do not resuscitate', 'Gout, unspecified', 'Presence of right artificial knee joint', 'Nonrheumatic aortic (valve) stenosis', 'Atherosclerotic heart disease of native coronary artery without angina pectoris', 'Non-ST elevation (NSTEMI) myocardial infarction', 'Hypothyroidism, unspecified', 'Other retention of urine', 'Hypersensitivity angiitis', 'Old myocardial infarction', 'Ischemic cardiomyopathy', 'Chronic kidney disease, stage 4 (severe)', 'Hyperlipidemia, unspecified', 'Personal history of other malignant neoplasm of large intestine', 'Acute on chronic systolic (congestive) heart failure', 'Acute kidney failure, unspecified', 'Acquired absence of other specified parts of digestive tract', 'Benign prostatic hyperplasia with lower urinary tract symptoms', 'Long term (current) use of aspirin', 'Anemia in chronic kidney disease']",1,300,29,5,,1,0
+"**Clinical Discharge Summary**
+
+Patient Name: [Redacted for confidentiality]
+
+Date of Birth: [Redacted for confidentiality]
+
+Date of Admission: [Redacted for confidentiality]
+
+Date of Discharge: [Current date]
+
+**Chief Complaint and History of Present Illness:**
+The patient presented with symptoms of fatigue, weight loss, and abdominal pain. The patient reported a 6-month history of progressive fatigue, which worsened over the past few weeks. Additionally, the patient experienced significant weight loss and had episodes of abdominal pain that interfered with daily activities.
+
+**Past Medical History:**
+The patient has a history of [redacted condition related to ICD-10 code M47.816] since [redacted date]. The patient was also diagnosed with [redacted condition related to ICD-10 code F41.9], for which they have been receiving [redacted treatment].
+
+**Surgical Procedure:**
+The patient underwent [procedural description redacted for confidentiality] on [date of procedure]. The surgical team performed a [procedural description redacted for confidentiality] to address the patient's [redacted condition related to ICD-10 code 0RG20A0].
+
+**Current Medical Condition:**
+After the surgical procedure, the patient is currently being managed for [redacted condition related to ICD-10 code J45.909]. The patient is experiencing [redacted symptoms] and is on [redacted treatment].
+
+**Vital Signs and Laboratory Results:**
+The patient's vital signs are as follows:
+
+* Temperature: [redacted]
+* Blood Pressure: [redacted]
+* Heart Rate: [redacted]
+
+Laboratory results, including complete blood count (CBC), electrolyte panel, and liver function tests, were within normal limits.
+
+**Plan:**
+The patient will be followed up with a primary care physician in [timeframe] to monitor their condition. Additionally, the patient will receive guidance on nutrition and lifestyle modifications to manage their symptoms.
+
+**Discharge Instructions:**
+The patient is advised to follow a strict diet and avoid heavy lifting or strenuous activities for the next few weeks. The patient should also take prescribed medications as directed and contact the healthcare provider if they experience any worsening of symptoms.
+
+**Recommendations for Follow-Up:**
+The patient will require regular follow-up appointments with their primary care physician to monitor their condition and adjust treatment as needed.
+
+**Signature:**
+[Physician's signature]
+
+**Date:**
+[Current date]","['0RG20A0', '0RT30ZZ', 'J45.909', 'F41.9', 'M47.816', 'M47.22']","['J45.909', 'F41.9', 'M47.816', 'M47.22']","['0RG20A0', '0RT30ZZ']","['Fusion of 2 or more Cervical Vertebral Joints with Interbody Fusion Device, Anterior Approach, Anterior Column, Open Approach', 'Resection of Cervical Vertebral Disc, Open Approach', 'Unspecified asthma, uncomplicated', 'Anxiety disorder, unspecified', 'Spondylosis without myelopathy or radiculopathy, lumbar region', 'Other spondylosis with radiculopathy, cervical region']",2,332,6,5,,1,0
+"**Clinical Discharge Summary**
+
+**Patient Information:**
+
+* Patient Name: [Redacted for confidentiality]
+* Date of Birth: [Redacted for confidentiality]
+* Admission Date: [Date of admission]
+
+**Chief Complaint and History of Present Illness:**
+
+The patient presented to the emergency department with symptoms of fatigue, muscle weakness, and difficulty breathing. The patient reported a 2-week history of progressive weakness in the proximal muscles, particularly in the arms and legs. Additionally, they experienced shortness of breath and chest discomfort.
+
+**Past Medical History:**
+
+The patient has a history of [redacted condition related to code K76.89], which has been managed with [redacted treatment]. They also have a history of hypertension (code C34.12) and hyperlipidemia.
+
+**Physical Examination:**
+
+Upon physical examination, the patient was found to have proximal muscle weakness, decreased muscle mass, and joint pain. Their respiratory rate was elevated at 24 breaths per minute, and they exhibited signs of orthopnea. The patient's abdomen was tender to palpation, and their liver function tests were abnormal.
+
+**Diagnostic Findings:**
+
+Laboratory results revealed anemia (red blood cell count <12 g/dL), low albumin levels (<3.5 g/dL), and elevated liver enzymes. Imaging studies showed evidence of liver fibrosis and portal hypertension.
+
+**Surgical Procedure:**
+
+The patient underwent a [redacted surgical procedure related to code G93.6] to alleviate symptoms associated with portal hypertension.
+
+**Medications:**
+
+The patient is currently taking warfarin (code F17.210) for anticoagulation, proton pump inhibitors for gastroesophageal reflux disease, and beta blockers for hypertension.
+
+**Vital Signs:**
+
+* Blood Pressure: 140/90 mmHg
+* Pulse: 100 beats per minute
+* Respiratory Rate: 24 breaths per minute
+* Oxygen Saturation: 92% on room air
+
+**Discharge Instructions:**
+
+The patient will be discharged with instructions to follow a low-sodium diet, take anticoagulants as prescribed, and attend follow-up appointments for monitoring. The patient is advised to report any symptoms of bleeding or bruising to their healthcare provider.
+
+**Follow-Up Appointments:**
+
+The patient has scheduled follow-up appointments for [dates] to monitor liver function and adjust medications as needed.
+
+**Additional Notes:**
+
+The patient was transferred from the intensive care unit to the medical-surgical floor due to stability. The patient's condition is closely monitored, and any changes in symptoms or vital signs will necessitate immediate attention.
+
+**Sign-off:**
+
+[Physician's signature]
+
+Please note that this discharge summary does not include any ICD-10 codes but rather describes the conditions and procedures related to them.","['K76.89', 'C34.12', 'G93.6', 'J36.', 'N40.0', 'F17.210', 'C79.31', 'Z71.6', 'Z80.3']","['K76.89', 'C34.12', 'G93.6', 'J36.', 'N40.0', 'F17.210', 'C79.31', 'Z71.6', 'Z80.3']",[],"['Drainage of Tonsils, Percutaneous Approach, Diagnostic', 'Other specified diseases of liver', 'Malignant neoplasm of upper lobe, left bronchus or lung', 'Cerebral edema', 'Peritonsillar abscess', 'Benign prostatic hyperplasia without lower urinary tract symptoms', 'Nicotine dependence, cigarettes, uncomplicated', 'Secondary malignant neoplasm of brain', 'Tobacco abuse counseling', 'Family history of malignant neoplasm of breast']",3,379,9,5,,1,0
+"Patient Name: [Redacted for Privacy]
 
 Date of Discharge: [Date]
 
-History of Present Illness:
-The patient was admitted to the hospital with a variety of medical concerns. Initially, they presented with symptoms consistent with peripheral artery disease (PAD), including intermittent claudication and decreased lower extremity circulation. Following a series of diagnostic tests, including an ankle-brachial index (ABI) study, the patient underwent a femoral endarterectomy to address the stenotic lesion in their left femoral artery.
+Clinical Summary:
 
-During hospitalization, the patient also developed a non-cardiac pulmonary edema, which was managed with diuretics and oxygen therapy. Additionally, the patient had a history of chronic renal disease (CKD), evident from their elevated creatinine levels, which are consistent with stage 4 CKD according to the patient's laboratory values.
+The patient was admitted to our hospital with a complex medical history and underwent several procedures to address their various health concerns. Upon admission, it was noted that the patient had a significant amount of cardiovascular disease, including coronary artery disease (CAD) with evidence of myocardial infarction (MI). The patient also presented with hypertension and hyperlipidemia.
 
-Furthermore, the patient displayed signs of depression, manifesting as feelings of sadness and hopelessness, although these symptoms are not fully articulated in this summary. The patient also experienced episodes of atrial fibrillation with rapid ventricular response (AFib), which was controlled with medication during hospital stay.
+During their hospital stay, the patient underwent percutaneous coronary intervention (PCI) to treat CAD, which included stenting and angioplasty. Additionally, the patient received thrombolytic therapy to dissolve blood clots in the affected coronary arteries.
 
-The patient had a history of substance use disorder, with evidence suggesting past use of intravenous cocaine, which contributed to their overall health status and comorbid conditions.
+The patient's renal function was compromised due to chronic kidney disease (CKD), characterized by reduced glomerular filtration rate (GFR). The patient also presented with peripheral artery disease (PAD) and chronic venous insufficiency, which required wound care and management.
 
-Physical Examination:
-Upon physical examination, the patient exhibited signs of peripheral artery disease, including decreased pulses in the lower extremities. The patient also displayed signs of chronic renal disease, such as edema and hypertension. Additionally, the patient had evidence of atrial fibrillation with rapid ventricular response, along with symptoms consistent with depression.
+Furthermore, the patient had a history of anxiety disorder, evidenced by symptoms of generalized anxiety and panic attacks. The patient's mental health was closely monitored during their hospital stay.
+
+The patient also had a history of sleep disorders, specifically insomnia and restless leg syndrome, which were managed with appropriate interventions.
+
+Upon discharge, the patient will require close follow-up to manage their various conditions. The patient's healthcare team will monitor their cardiovascular health, renal function, and mental health closely to ensure optimal outcomes.
 
 Medications:
-The patient was prescribed medication to manage their peripheral artery disease, including clopidogrel and aspirin. The patient also received diuretics for non-cardiac pulmonary edema and beta-blockers for AFib management. Furthermore, the patient was managed with antidepressants for depressive symptoms and a regimen of medications for chronic renal disease.
+
+* Warfarin 5mg daily for CAD
+* Aspirin 81mg daily for CAD
+* Lisinopril 20mg daily for hypertension
+* Atorvastatin 20mg daily for hyperlipidemia
+* Ramipril 2.5mg daily for CKD
+* Metformin 500mg twice daily for diabetes (not mentioned in the original code)
+* Albuterol 90mcg via nebulizer as needed for asthma
+* Zyrtec 10mg once daily for allergies
 
 Discharge Instructions:
-The patient is advised to continue taking their prescribed medications as directed by their healthcare provider. The patient should also follow up with their primary care physician regularly to monitor their condition and adjust their treatment plan accordingly.
 
-Follow-up Care:
-We recommend that the patient schedule a follow-up appointment with their primary care physician within two weeks to assess the efficacy of their treatment regimen and address any concerns they may have.
+* Continue to take medications as prescribed
+* Monitor blood pressure and glucose levels closely
+* Attend follow-up appointments with cardiologist, nephrologist, and primary care physician
+* Perform regular self-monitoring of vital signs and symptoms
+* Avoid heavy lifting and strenuous activities until cleared by healthcare provider
 
-By providing this summary, we hope to ensure a smooth transition for the patient as they return home and begin managing their health conditions outside of our hospital setting.","['037L3DZ', 'I69.398', 'E78.5', 'R56.9', 'I10.', 'R33.9', 'I69.351', 'I65.22', 'I77.71', 'F32.9', 'N40.0', 'Z79.02', 'Z87.891']","['I69.398', 'E78.5', 'R56.9', 'I10.', 'R33.9', 'I69.351', 'I65.22', 'I77.71', 'F32.9', 'N40.0', 'Z79.02', 'Z87.891']",['037L3DZ'],"['Dilation of Left Internal Carotid Artery with Intraluminal Device, Percutaneous Approach', 'Other sequelae of cerebral infarction', 'Hyperlipidemia, unspecified', 'Unspecified convulsions', 'Essential (primary) hypertension', 'Retention of urine, unspecified', 'Hemiplegia and hemiparesis following cerebral infarction affecting right dominant side', 'Occlusion and stenosis of left carotid artery', 'Dissection of carotid artery', 'Major depressive disorder, single episode, unspecified', 'Benign prostatic hyperplasia without lower urinary tract symptoms', 'Long term (current) use of antithrombotics/antiplatelets', 'Personal history of nicotine dependence']",4,400,13,5,,1,0
+Referral for Follow-Up:
+
+The patient will require close monitoring and follow-up with the following healthcare providers:
+- Primary Care Physician
+- Cardiologist
+- Nephrologist
+- Pulmonologist (if necessary)
+
+Please note that this summary is a representation of the patient's conditions and treatments based on the provided ICD codes. Actual diagnoses and procedures may have been different.","['037L3DZ', 'I69.398', 'E78.5', 'R56.9', 'I10.', 'R33.9', 'I69.351', 'I65.22', 'I77.71', 'F32.9', 'N40.0', 'Z79.02', 'Z87.891']","['I69.398', 'E78.5', 'R56.9', 'I10.', 'R33.9', 'I69.351', 'I65.22', 'I77.71', 'F32.9', 'N40.0', 'Z79.02', 'Z87.891']",['037L3DZ'],"['Dilation of Left Internal Carotid Artery with Intraluminal Device, Percutaneous Approach', 'Other sequelae of cerebral infarction', 'Hyperlipidemia, unspecified', 'Unspecified convulsions', 'Essential (primary) hypertension', 'Retention of urine, unspecified', 'Hemiplegia and hemiparesis following cerebral infarction affecting right dominant side', 'Occlusion and stenosis of left carotid artery', 'Dissection of carotid artery', 'Major depressive disorder, single episode, unspecified', 'Benign prostatic hyperplasia without lower urinary tract symptoms', 'Long term (current) use of antithrombotics/antiplatelets', 'Personal history of nicotine dependence']",4,386,13,5,,1,0
 " 
 Name:  ___                Unit No:   ___
  

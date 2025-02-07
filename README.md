@@ -1,276 +1,184 @@
 # DP-Clinical-ICL
 
-This repository contains code for generating clinical discharge summaries using In-Context Learning (ICL) with differential privacy guarantees. The project uses the MIMIC-IV dataset and various language models through Ollama.
-
-
-## Prerequisites
-
-- Python 3.9+
-- Access to MIMIC-IV dataset (PhysioNet credentialed user required)
-- Ollama installed on your system
-
-## Ollama Setup
-
-1. Install Ollama:
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-```
-
-2. Pull the default model:
-```bash
-ollama pull llama3.2
-```
-
-> **Note**: You can pull additional models later using `ollama pull MODEL_NAME`. Check available models at https://ollama.com/search
-
-## System Requirements
-
-- **Disk Space**: At least 10GB free space
-  - ~8GB for MIMIC-IV dataset files
-  - ~2GB for generated outputs and model files
-
-- **GPU Memory Requirements**:
-  - As a rule of thumb, you need at least twice as much VRAM (in GB) as the billions of parameters in your chosen model
-  - Example requirements:
-    - Llama 2 7B: ~14GB VRAM
-    - Mistral 7B: ~14GB VRAM
-    - Mixtral 8x7B: ~112GB VRAM
-    - For smaller GPUs, consider using the smaller variants of these models
-
-- **RAM**: Minimum 16GB recommended for processing the MIMIC-IV dataset
-
-## Installation
-
-1. Create and activate a new conda environment:
-```bash
-conda create -n dp-clinical python=3.8
-conda activate dp-clinical
-```
-
-2. Clone the repository:
-```bash
-git clone https://github.com/yourusername/DP-Clinical-ICL.git
-cd DP-Clinical-ICL
-```
-
-3. Install the required packages:
-```bash
-pip install -r requirements.txt
-```
-
-## Dataset Setup
-
-1. Request access to MIMIC-IV dataset at:
-   - MIMIC-IV Clinical Database: https://physionet.org/content/mimiciv/2.2/
-   - MIMIC-IV Notes: https://www.physionet.org/content/mimic-iv-note/2.2/
-
-2. Navigate to the data directory:
-```bash
-cd data
-```
-
-3. > **Note**: The download process requires approximately 10GB of disk space and may take a considerable amount of time depending on your internet connection. It's recommended to use `tmux` to prevent the download from being interrupted if your connection drops:
-> ```bash
-> # Install tmux if not already installed
-> sudo apt-get install tmux
-> 
-> # Create a new tmux session
-> tmux new -s mimic_download
-> 
-> # Now run the download commands inside tmux
-> # To detach from the session: press Ctrl+B, then D
-> # To reattach to the session later: tmux attach -t mimic_download
-> ```
-
-4. Run the commands to download the necessary files:
-```bash
-wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimic-iv-note/2.2/
-wget -r -N -c -np --user [YOUR_USERNAME] --ask-password https://physionet.org/files/mimiciv/2.2/
-```
-
-5. If everything went well, you should have the following structure:
-```
-data/
-├── generated/
-│   └── [Generated datasets will be saved here]
-└── physionet.org/
-    └── files/
-        ├── mimic-iv-note/
-        │   └── 2.2/
-        │       └── note/
-        │           └── discharge.csv.gz
-        └── mimiciv/
-            └── 2.2/
-                └── hosp/
-                    ├── diagnoses_icd.csv.gz
-                    ├── procedures_icd.csv.gz
-                    ├── d_icd_procedures.csv.gz
-                    └── d_icd_diagnoses.csv.gz
-```
+A user-friendly web application for generating clinical discharge summaries. This tool helps medical researchers create realistic patient discharge summaries while maintaining privacy. It uses artificial intelligence (specifically, In-Context Learning) and can apply privacy protection to the generated data.
+
+> **Note for Technical Users**: This README provides user-friendly instructions focused on using the Streamlit web interface. If you want to understand the technical details, command-line usage, custom dataset format, or implementation details, please check [README_OLD.md](README_OLD.md).
 
+## What You Need Before Starting
 
-## Data Extraction
+1. **Computer Requirements**:
+   - At least 16GB of RAM (memory)
+   - At least 10GB of free disk space
+   - An NVIDIA graphics card (GPU) is recommended but not required
+   - Any operating system (Windows, Mac, or Linux)
 
-Before running the generation script, you need to process the MIMIC-IV dataset to create the required format. The `extract_data_amc.py` script handles this by:
-1. Loading and merging the necessary MIMIC-IV files
-2. Formatting ICD codes correctly
-3. Creating the required data structure with discharge summaries and their associated codes
+2. **Software Requirements**:
+   - Python 3.9 or newer (if you don't have it, visit [Python's download page](https://www.python.org/downloads/))
+   - Conda (download from [Anaconda's website](https://www.anaconda.com/download))
+   - Ollama (will be installed automatically by our script)
 
-> **Note**: The extraction process typically takes a few minutes to complete, as it needs to process and merge large CSV files. The exact time depends on your system's CPU and memory speed.
+3. **Access Requirements**:
+   - MIMIC-IV dataset access credentials
+     - Visit [PhysioNet](https://physionet.org/content/mimiciv/2.2/)
+     - Create an account and complete the required training
+     - Remember your username and password; you'll need them later
 
-### Running the Extraction
+## Installation Guide
 
-1. Make sure all MIMIC-IV files are in place as shown in the directory structure above
-2. Navigate to the root directory again:
-```bash
-cd ..
-```
-3. Run the extraction script:
-```bash
-python extract_data_amc.py
-```
-
-This will create two files in your `data/` directory:
-- `mimiciv_icd10.feather`: The main dataset file containing:
-  - Discharge summaries (`text`)
-  - ICD-10 codes (`target`, `icd10_diag`, `icd10_proc`)
-  - Code descriptions (`long_title`)
-- `mimiciv_icd10_split.feather`: Train/validation/test split information
-
-### Verifying the Extraction
-
-You can check if the extraction was successful by verifying that both files exist and contain data:
-```bash
-ls -l data/mimiciv_icd10*.feather
-```
-
-The extracted dataset should contain properly formatted records with:
-- Diagnostic codes including periods (e.g., "I25.10")
-- Procedure codes without periods (e.g., "02HN3DZ")
-- Non-empty text fields
-- At least one ICD-10 code per record
-
-Only after successful data extraction should you proceed to running `DP_ICL_gen.py`.
-
-## Using Custom Dataset
-
-If you want to use your own dataset instead of MIMIC-IV, you'll need to format it according to the following specifications:
-
-### Required File Format
-
-Your dataset should be saved as a Feather file (`.feather`) with the following columns:
-
-- `_id`: Unique identifier for each record
-- `text`: The clinical discharge summary text
-- `target`: List of ICD-10 codes associated with the text (in order: first every diagnostic code, then every procedure code)
-- `icd10_diag`: List of ICD-10 diagnostic codes
-- `icd10_proc`: List of ICD-10 procedure codes
-- `long_title`: List of long descriptions for the ICD codes
+### Step 1: Opening a Terminal
 
-### Data Requirements
+#### On Windows:
+1. Press the Windows key + R
+2. Type "cmd" and press Enter
+   - Or search for "Command Prompt" in the Start menu
 
-1. The ICD-10 codes should be properly formatted:
-   - Diagnostic codes should include a period after the first 3 characters (e.g., "A01.1")
-   - Procedure codes should not include periods
+#### On Mac:
+1. Press Command + Space
+2. Type "Terminal" and press Enter
+   - Or find Terminal in Applications > Utilities
 
-2. Each record should have:
-   - Non-empty text field
-   - At least one ICD-10 code in either diagnostic or procedure codes
-   - Corresponding long titles for each code
+#### On Linux:
+1. Press Ctrl + Alt + T
+   - Or search for "Terminal" in your applications menu
 
-3. To use your custom dataset:
-   - Use the `--custom_dataset_path` parameter to specify a different location:
-     ```bash
-     python DP_ICL_gen.py --custom_dataset_path /path/to/your/dataset.feather
-     ```
+### Step 2: Installing the Application
+
+1. First, download the code:
+   ```bash
+   git clone https://github.com/yourusername/DP-Clinical-ICL.git
+   ```
+   - If this doesn't work, you may need to [install Git](https://git-scm.com/downloads) first
 
-### Example Data Format
+2. Move into the downloaded folder:
+   ```bash
+   cd DP-Clinical-ICL
+   ```
 
-```python
-{
-    '_id': 1234,
-    'text': 'Patient admitted with chest pain...',
-    'target': ['I25.10', 'Z95.5', '02HN3DZ'],
-    'icd10_diag': ['I25.10', 'Z95.5'],
-    'icd10_proc': ['02HN3DZ'],
-    'long_title': ['Atherosclerotic heart disease', 'Presence of coronary stent', 'Insertion of stent into coronary artery']
-}
-```
+3. Make the setup script executable and run it:
+   ```bash
+   chmod +x run_app.sh
+   ./run_app.sh
+   ```
 
-This will create processed dataset files in the `data/` directory.
+The setup script will automatically:
+- Set up a new environment for the application
+- Install all required software
+- Install Ollama (the AI model manager)
+- Download the default AI model (llama3.2)
+- Start the application in your web browser
 
-## Data Generation
+If everything works correctly, your default web browser should open automatically with the application running.
 
-The main script for generating clinical summaries is `DP_ICL_gen.py`. Here are some key parameters and how to use them:
+## Using the Application
 
-### Basic Usage
+The application works like a step-by-step wizard, with four main steps shown in the left sidebar:
 
-```bash
-python DP_ICL_gen.py --model_name llama3.2 --num_shots 5 --generated_dataset_size 100
-```
+### Step 1: System Check
 
-### Important Parameters
+This first page checks if your computer meets all requirements:
+- Shows how much memory (RAM) you have
+- Checks your available disk space
+- Looks for a compatible graphics card
+- Tells you if your system is ready to proceed
 
-- `--model_name`: Specify which Ollama model to use (e.g., `llama2`, `mistral`, `mixtral`)
-- `--num_shots`: Number of few-shot examples (default: 5)
-- `--generated_dataset_size`: Number of samples to generate (default: 100)
-- `--prompt_index`: Index of the prompt template to use (0-2)
-- `--temperature`: Temperature for generation (default: 0.7)
+If any requirements aren't met, you'll see clear error messages explaining what's missing.
 
-### Custom Prompt
+### Step 2: Dataset Download
 
-To add your own prompt, you can modify the `prompts` list in `DP_ICL_gen.py`. The prompts are defined starting at line 58 of the file:
+Here you'll download the medical records database:
+1. Enter your PhysioNet username and password
+2. Click the "Download Dataset" button
+3. Wait for the download to complete (about 8GB of data)
+   - This might take 30-60 minutes depending on your internet speed
+   - The app will show download progress
+   - It's safe to leave this running in the background
 
-```python
-prompts = [
-    "Generate a clinical discharge summary...",  # Prompt 0
-    """Please generate a realistic and concise clinical...""",  # Prompt 1
-    """Please generate a realistic, concise, and professional...""",  # Prompt 2
-    """[ADD HERE YOUR OWN PROMPT]
-ICD10-CODES= """  # Prompt 3 (Custom)
-]
-```
-NOTE:
-- The prompt should end with `ICD10-CODES= ` so that the script can insert the ICD10 codes in the right place
+### Step 3: Data Extraction
 
-To use your custom prompt:
-1. Open `DP_ICL_gen.py`
-2. Find the `prompts` list
-3. Replace the text in index 3 at line 111 (`[ADD HERE YOUR OWN PROMPT]`) with your custom prompt
-4. Run the script with `--prompt_index 3`
+This step prepares the downloaded data:
+1. Click the "Extract Data" button
+2. Wait while the app processes the files
+   - This typically takes 15-30 minutes
+   - You'll see progress messages as it works
+   - It's normal if it seems slow at first
+   - Don't close the browser window during this step
 
-### Example Commands
+### Step 4: Data Generation
 
-1. Generate 100 samples using llama3.2 with custom prompt (inserted in the script):
-```bash
-python DP_ICL_gen.py --model_name llama3.2 --num_shots 5 --generated_dataset_size 100 --prompt_index 3
-```
+This is where you create new discharge summaries. You have several options to control how they're generated:
 
-2. Generate samples with higher temperature for more diversity:
-```bash
-python DP_ICL_gen.py --model_name mistral --temperature 0.9 --num_shots 3 --generated_dataset_size 50
-```
+#### Basic Options:
 
-3. Non-private generation (without DP):
-```bash
-python DP_ICL_gen.py --model_name llama2 --nonprivate --num_shots 5 --generated_dataset_size 100
-```
+1. **AI Model** (default is "llama3.2"):
+   - Think of this like choosing which expert writes your summaries
+   - Stick with the default unless you have a specific reason to change it
+   - Other options include "llama2", "mistral", or "mixtral"
 
-## Output
+2. **Number of Examples** (default is 5):
+   - How many real examples the AI should look at
+   - More examples = better quality but slower generation
+   - Recommended: start with 5 and adjust if needed
 
-Generated datasets will be saved in the `data/generated/` directory in both Feather and CSV formats. The filename will include the parameters used for generation, making it easy to identify different runs.
+3. **Number of Summaries** (default is 100):
+   - How many new summaries you want to create
+   - Start small (like 10) for testing
+   - Larger numbers take longer to generate
 
-## Available Models
+#### Advanced Options:
 
-You can check available models at https://ollama.com/search. Make sure to have the desired model pulled in Ollama before running the generation script.
+1. **Temperature** (default is 0.7):
+   - Controls how creative the AI can be
+   - Lower (0.1-0.3): Very consistent, repetitive outputs
+   - Medium (0.5-0.7): Good balance for medical text
+   - Higher (0.7-1.0): More varied but potentially less accurate
 
-To pull a model run:
-```bash
-ollama pull [MODEL_NAME]
-```
+2. **Privacy Protection**:
+   - "Non-private": No privacy protection
+   - "Default epsilons": Standard privacy protection
+   - "Custom epsilons": Advanced privacy settings (consult with privacy experts)
 
-## Notes
+3. **Custom Instructions**:
+   - You can write your own instructions for the AI
+   - Use the large text box to enter specific requirements
+   - Must end with "ICD10-CODES= "
+   - The default instructions work well for most cases
 
-- The script uses the Sentence Transformers model 'all-MiniLM-L6-v2' for embedding calculations
-- For private generation, different epsilon values can be specified using the `--epsilons` parameter
-- The `--cardio` flag can be used to filter for cardiology-related codes only
+## Working with Generated Files
+
+- All generated files are saved in a folder called "data/generated"
+- Each file name includes information about how it was generated
+- You can download files directly from the web interface
+- Files remain available until you clear them using the "Clear Generated Files List" button
+
+## Common Problems and Solutions
+
+1. **"The application seems frozen"**:
+   - This is normal during data extraction and generation
+   - Look for progress messages at the bottom of the page
+   - Don't close the browser window
+
+2. **"Out of memory" errors**:
+   - Try generating fewer summaries at once
+   - Close other large applications
+   - Use a smaller AI model
+
+3. **"Files not found" errors**:
+   - Make sure the dataset download completed successfully
+   - Try the download step again
+
+4. **"Model not found" errors**:
+   - Wait a few minutes after starting the application
+   - The model might still be downloading
+
+## Getting Help
+
+If you encounter problems:
+1. Check the error messages in the application
+2. Look through the Troubleshooting section above
+3. Contact your institution's IT support
+4. [Create an issue](https://github.com/yourusername/DP-Clinical-ICL/issues) on our GitHub page
+
+## Citation
+
+If you use this tool in your research, please cite:
+[Add citation information] 

@@ -11,6 +11,8 @@ from functools import partial
 import numpy as np
 from collections import Counter
 import time
+import sys
+
 # Constants
 TRAIN_RATIO = 0.9
 PAD_TOKEN = "<PAD>"
@@ -32,6 +34,10 @@ sns.set_style("whitegrid")
 # Initialize the Faker library
 fake = Faker()
 Faker.seed(42)
+
+def print_flush(*args, **kwargs):
+    """Print with immediate flush."""
+    print(*args, **kwargs, flush=True)
 
 def reformat_icd10(code: str, is_diag: bool) -> str:
     """Put a period in the right place for ICD-10 codes."""
@@ -118,62 +124,62 @@ def filter_codes(df: pd.DataFrame, columns: list[str], min_count: int) -> pd.Dat
 def main():
     start_time = time.time()
     # Load data
-    print("Loading MIMIC-IV Notes dataset...")
+    print_flush("Loading MIMIC-IV Notes dataset...")
     mimic_notes = pd.read_csv("./data/physionet.org/files/mimic-iv-note/2.2/note/discharge.csv.gz", compression='gzip')
-    print("Loading MIMIC-IV Procedures dataset...")
+    print_flush("Loading MIMIC-IV Procedures dataset...")
     mimic_proc = pd.read_csv("./data/physionet.org/files/mimiciv/2.2/hosp/procedures_icd.csv.gz", compression='gzip')
-    print("Loading MIMIC-IV Diagnoses dataset...")
+    print_flush("Loading MIMIC-IV Diagnoses dataset...")
     mimic_diag = pd.read_csv("./data/physionet.org/files/mimiciv/2.2/hosp/diagnoses_icd.csv.gz", compression='gzip')
-    print("Loading ICD Procedures descriptions...")
+    print_flush("Loading ICD Procedures descriptions...")
     procedures = pd.read_csv("./data/physionet.org/files/mimiciv/2.2/hosp/d_icd_procedures.csv.gz", compression='gzip')
-    print("Loading ICD Diagnoses descriptions...")
+    print_flush("Loading ICD Diagnoses descriptions...")
     diagnoses = pd.read_csv("./data/physionet.org/files/mimiciv/2.2/hosp/d_icd_diagnoses.csv.gz", compression='gzip')
 
     # Merge procedures and diagnoses
-    print("Merging procedures with their descriptions...")
+    print_flush("Merging procedures with their descriptions...")
     mimic_proc = mimic_proc.merge(procedures, how='inner', on=['icd_code','icd_version'])
-    print("Merging diagnoses with their descriptions...")
+    print_flush("Merging diagnoses with their descriptions...")
     mimic_diag = mimic_diag.merge(diagnoses, how='inner', on=['icd_code','icd_version'])
 
     # Format ICD codes
-    print("Formatting procedure ICD codes...")
+    print_flush("Formatting procedure ICD codes...")
     mimic_proc["icd_code"] = mimic_proc.apply(
         lambda row: reformat_icd(code=row["icd_code"], version=row["icd_version"], is_diag=False),
         axis=1,
     )
-    print("Formatting diagnosis ICD codes...")
+    print_flush("Formatting diagnosis ICD codes...")
     mimic_diag["icd_code"] = mimic_diag.apply(
         lambda row: reformat_icd(code=row["icd_code"], version=row["icd_version"], is_diag=True),
         axis=1,
     )
 
     # Process codes and notes
-    print("Processing procedure codes...")
+    print_flush("Processing procedure codes...")
     mimic_proc = parse_codes_dataframe(mimic_proc)
-    print("Processing diagnosis codes...")
+    print_flush("Processing diagnosis codes...")
     mimic_diag = parse_codes_dataframe(mimic_diag)
-    print("Processing clinical notes...")
+    print_flush("Processing clinical notes...")
     mimic_notes = parse_notes_dataframe(mimic_notes)
 
     # Filter for ICD-10 codes and merge
-    print("Filtering for ICD-10 codes...")
+    print_flush("Filtering for ICD-10 codes...")
     mimic_proc_10 = mimic_proc[mimic_proc["icd_version"] == 10]
     mimic_proc_10 = mimic_proc_10.rename(columns={"icd_code": "icd10_proc"})
     mimic_diag_10 = mimic_diag[mimic_diag["icd_version"] == 10]
     mimic_diag_10 = mimic_diag_10.rename(columns={"icd_code": "icd10_diag"})
 
     # Merge notes with procedures and diagnoses
-    print("Merging clinical notes with procedures...")
+    print_flush("Merging clinical notes with procedures...")
     mimiciv_10 = mimic_notes.merge(
         mimic_proc_10[[ID_COLUMN, "icd10_proc", "long_title"]], on=ID_COLUMN, how="inner"
     )
-    print("Merging clinical notes with diagnoses...")
+    print_flush("Merging clinical notes with diagnoses...")
     mimiciv_10 = mimiciv_10.merge(
         mimic_diag_10[[ID_COLUMN, "icd10_diag", "long_title"]], on=ID_COLUMN, how="inner"
     )
 
     # Clean up data
-    print("Cleaning and filtering records...")
+    print_flush("Cleaning and filtering records...")
     mimiciv_10 = mimiciv_10.dropna(subset=["icd10_proc", "icd10_diag"], how="all")
     mimiciv_10["icd10_proc"] = mimiciv_10["icd10_proc"].apply(
         lambda x: [] if x is np.nan else x
@@ -183,23 +189,23 @@ def main():
     )
 
     # Filter codes and create target
-    print("Filtering codes by minimum count...")
+    print_flush("Filtering codes by minimum count...")
     mimiciv_10 = filter_codes(mimiciv_10, ["icd10_proc", "icd10_diag"], MIN_TARGET_COUNT)
     mimiciv_10[TARGET_COLUMN] = mimiciv_10["icd10_proc"] + mimiciv_10["icd10_diag"]
     mimiciv_10["long_title"] = mimiciv_10["long_title_x"] + mimiciv_10["long_title_y"]
     
     # Remove empty targets and reset index
-    print("Removing records with empty targets...")
+    print_flush("Removing records with empty targets...")
     mimiciv_10 = mimiciv_10[mimiciv_10[TARGET_COLUMN].apply(lambda x: len(x) > 0)]
     mimiciv_10 = mimiciv_10.reset_index(drop=True)
 
     # Save to disk
-    print("Saving processed dataset to disk...")
+    print_flush("Saving processed dataset to disk...")
     mimiciv_10.to_feather("./data/mimiciv_icd10.feather")
-    print("Dataset saved successfully!")
+    print_flush("Dataset saved successfully!")
 
     #print time taken
-    print(f"Time taken: {(time.time() - start_time)/60} minutes")
+    print_flush(f"Time taken: {(time.time() - start_time)/60} minutes")
 
 if __name__ == "__main__":
     main() 
