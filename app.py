@@ -11,8 +11,8 @@ st.set_page_config(page_title="DP-Clinical-ICL Generator", layout="wide")
 def check_system_requirements():
     """Check if system meets the minimum requirements"""
     requirements = {
-        "RAM": {"required": 16, "actual": round(psutil.virtual_memory().total/1024**3)},
-        "Disk": {"required": 10, "actual": round(psutil.disk_usage('/').free/1024**3)}
+        "RAM": {"required": 16, "actual": round(psutil.virtual_memory().total/1024**3), "unit": "GB"},
+        "Disk": {"required": 10, "actual": round(psutil.disk_usage('/').free/1024**3), "unit": "GB"}
     }
     
     # Check GPU using nvidia-smi
@@ -24,13 +24,13 @@ def check_system_requirements():
         total_gpu_memory = sum(gpu_memories) / 1024  # Convert MB to GB
         num_gpus = len(gpu_memories)
         
-        requirements["GPU"] = {"required": True, "actual": True}
-        requirements["GPU Memory"] = {"required": 14, "actual": round(total_gpu_memory, 1)}
-        requirements["Number of GPUs"] = {"required": 1, "actual": num_gpus}
+        requirements["GPU"] = {"required": True, "actual": True, "unit": None}
+        requirements["GPU Memory"] = {"required": 14, "actual": round(total_gpu_memory, 1), "unit": "GB"}
+        requirements["Number of GPUs"] = {"required": 1, "actual": num_gpus, "unit": None}
     except (subprocess.CalledProcessError, FileNotFoundError):
-        requirements["GPU"] = {"required": True, "actual": False}
-        requirements["GPU Memory"] = {"required": 14, "actual": 0}
-        requirements["Number of GPUs"] = {"required": 1, "actual": 0}
+        requirements["GPU"] = {"required": True, "actual": False, "unit": None}
+        requirements["GPU Memory"] = {"required": 14, "actual": 0, "unit": "GB"}
+        requirements["Number of GPUs"] = {"required": 1, "actual": 0, "unit": None}
     
     return requirements
 
@@ -155,6 +155,29 @@ def generate_data(model_name, num_shots, dataset_size, temperature, prompt_index
         
         # Handle custom prompt vs prompt index
         if prompt:
+            # Validate custom prompt format
+            if not prompt.strip().endswith("ICD10-CODES="):
+                error_message = f"""
+⚠️ Custom Prompt Format Error
+
+Your prompt must end with exactly 'ICD10-CODES=' (without quotes). This is required because:
+1. The script needs to know where to insert the ICD-10 codes
+2. The format must be exact (no extra spaces after the '=')
+3. The codes will be inserted immediately after the '='
+
+Your prompt ends with: '{prompt.strip()[-20:] if len(prompt.strip()) > 20 else prompt.strip()}'
+
+To fix this:
+1. Check for any trailing spaces or newlines
+2. Make sure 'ICD10-CODES=' is the last part of your prompt
+3. Verify there are no extra characters after the '='
+
+Example of correct prompt ending:
+"... rest of your prompt text here ICD10-CODES="
+"""
+                st.error(error_message)
+                return False
+                
             cmd.extend(["--prompt", prompt])
             cmd.extend(["--prompt_index", "0"])  # Use 0 as default when custom prompt is provided
         else:
@@ -191,9 +214,23 @@ if page == "System Check":
     
     for resource, details in requirements.items():
         if details["actual"] >= details["required"]:
-            st.success(f"{resource}: {details['actual']} (Required: {details['required']})")
+            message = f"{resource}: {details['actual']}"
+            if details["unit"]:
+                message += f" {details['unit']}"
+            message += f" (Required: {details['required']}"
+            if details["unit"]:
+                message += f" {details['unit']}"
+            message += ")"
+            st.success(message)
         else:
-            st.error(f"{resource}: {details['actual']} (Required: {details['required']})")
+            message = f"{resource}: {details['actual']}"
+            if details["unit"]:
+                message += f" {details['unit']}"
+            message += f" (Required: {details['required']}"
+            if details["unit"]:
+                message += f" {details['unit']}"
+            message += ")"
+            st.error(message)
 
 elif page == "Dataset Download":
     st.header("MIMIC-IV Dataset Download")
@@ -249,6 +286,31 @@ elif page == "Data Generation":
         )
         use_custom_prompt = st.checkbox("Use Custom Prompt", value=False)
         custom_dataset = st.file_uploader("Custom Dataset (optional)", type=["feather"])
+    
+    # Add time estimate warning
+    estimated_time = dataset_size * num_shots * 0.6  # roughly 0.6 minutes per sample with 5 shots on a 3090
+    hours = int(estimated_time // 60)
+    minutes = int(estimated_time % 60)
+    
+    st.warning(f"""
+⚠️ **Generation Time Estimate**
+
+With your current settings ({dataset_size} samples, {num_shots}-shot), expect approximately:
+- {hours} hours and {minutes} minutes on an NVIDIA RTX 3090
+- Longer times on less powerful GPUs
+- Much longer (hours or days) without a GPU
+
+This is because:
+- Each sample takes about 1-2 minutes to generate
+- The number of shots affects generation time
+- The total time scales with the number of samples
+- GPU power significantly impacts speed
+
+You can reduce the generation time by:
+1. Reducing the number of samples
+2. Using fewer shots
+3. Running on a powerful GPU
+""")
     
     # Privacy settings
     privacy_option = st.radio(
@@ -405,11 +467,16 @@ Remember to:
                 
                 # Update the list of generated files - only get files from this generation
                 st.session_state.last_generation_time = generation_start_time
-                current_files = [
-                    f for f in Path("data/generated").glob("*.csv")
-                    if not any(x in f.name for x in ['embeddings', 'samples'])
-                    and os.path.getctime(f) >= generation_start_time
-                ]
+                
+                # Find all generated files in the output directory and its subdirectories
+                current_files = []
+                for root, dirs, files in os.walk("data/generated"):
+                    for file in files:
+                        if file.endswith('.csv') and 'generated_dataset' in file:
+                            file_path = Path(os.path.join(root, file))
+                            if os.path.getctime(file_path) >= generation_start_time:
+                                current_files.append(file_path)
+                
                 st.session_state.generated_files = current_files
             else:
                 st.error("Data generation failed. Please check the logs.")
@@ -419,18 +486,23 @@ Remember to:
         st.subheader("Generated Files")
         for file in st.session_state.generated_files:
             if file.exists() and os.path.getctime(file) >= st.session_state.last_generation_time:  # Only show files from last generation
-                df = pd.read_csv(file)
-                st.write(f"File: {file.name}")
-                st.dataframe(df.head())
-                
-                # Download button for each file
-                with open(file, "rb") as f:
-                    st.download_button(
-                        label=f"Download {file.name}",
-                        data=f,
-                        file_name=file.name,
-                        mime="text/csv"
-                    )
+                try:
+                    df = pd.read_csv(file)
+                    st.write(f"File: {file.name}")
+                    st.write(f"Location: {file}")
+                    st.dataframe(df.head())
+                    
+                    # Download button for each file
+                    with open(file, "rb") as f:
+                        st.download_button(
+                            label=f"Download {file.name}",
+                            data=f,
+                            file_name=file.name,
+                            mime="text/csv"
+                        )
+                    st.markdown("---")  # Add a separator between files
+                except Exception as e:
+                    st.error(f"Error reading file {file.name}: {str(e)}")
     else:
         # Show warning if no files exist
         st.warning("No generated dataset files found. Use the form above to generate new files.") 

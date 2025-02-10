@@ -70,8 +70,28 @@ parser.add_argument("--custom_dataset_path",type=str,default=None,help="Custom d
 args = parser.parse_args()
 
 # Validate custom prompt if provided
-if args.prompt is not None and not args.prompt.strip().endswith("ICD10-CODES="):
-    raise ValueError("Custom prompt must end with 'ICD10-CODES=' (no extra spaces after the '=')")
+if args.prompt is not None:
+    prompt = args.prompt.strip()
+    if not prompt.endswith("ICD10-CODES="):
+        error_message = """
+Custom prompt validation failed!
+
+Your prompt must end with exactly 'ICD10-CODES=' (without quotes). This is required because:
+1. The script needs to know where to insert the ICD-10 codes
+2. The format must be exact (no extra spaces after the '=')
+3. The codes will be inserted immediately after the '='
+
+Your prompt ends with: '{}'
+
+To fix this:
+1. Check for any trailing spaces or newlines
+2. Make sure 'ICD10-CODES=' is the last part of your prompt
+3. Verify there are no extra characters after the '='
+
+Example of correct prompt ending:
+"... rest of your prompt text here ICD10-CODES="
+""".format(prompt[-20:] if len(prompt) > 20 else prompt)
+        raise ValueError(error_message)
 
 # Create output directory for this run
 output_dir = create_output_directory(args)
@@ -285,11 +305,12 @@ for j,k in tqdm(enumerate(range(0,NUM_PARTITIONS*partition_size,partition_size))
 
 generated_data_path = output_dir
 run_id = f"{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_{args.nonprivate}"
-zero_shot_samples_path = os.path.join(generated_data_path, "zero_shot_samples.json")
-few_shot_samples_path = os.path.join(generated_data_path, "few_shot_samples.json")
-zero_shot_embeddings_path = os.path.join(generated_data_path, "zero_shot_embeddings.csv")
-few_shot_embeddings_path = os.path.join(generated_data_path, "few_shot_embeddings.csv")
-ground_truth_path = os.path.join(generated_data_path, "ground_truth.json")
+
+# Save embeddings and samples in the base generated directory
+zero_shot_samples_path = os.path.join("./data/generated", "zero_shot_samples.json")
+few_shot_samples_path = os.path.join("./data/generated", "few_shot_samples.json")
+zero_shot_embeddings_path = os.path.join("./data/generated", "zero_shot_embeddings.csv")
+few_shot_embeddings_path = os.path.join("./data/generated", "few_shot_embeddings.csv")
 
 #save the zero shot samples to a json file
 with open(zero_shot_samples_path,"w") as f:
@@ -297,9 +318,6 @@ with open(zero_shot_samples_path,"w") as f:
 
 #save the zero shot embeddings to a csv file
 print(f"Length of zero_shots_embeddings before saving: {len(zero_shots_embeddings)}")
-with open(zero_shot_embeddings_path,"w") as f:
-    for i in range(len(zero_shots_embeddings)):
-        f.write(",".join([str(x) for x in zero_shots_embeddings[i]])+"\n")
 pd.DataFrame(zero_shots_embeddings).to_csv(zero_shot_embeddings_path, index=False)
 
 #save generated samples to a json file
@@ -307,10 +325,8 @@ with open(few_shot_samples_path,"w") as f:
     json.dump(few_shot_samples,f,indent=4)
 
 #save the few shot embeddings to a csv file
-with open("./data/generated/few_shot_embeddings.csv","w") as f:
-    for i in range(len(few_shots_embeddings)):
-        f.write(",".join([str(x) for x in few_shots_embeddings[i]])+"\n")
 pd.DataFrame(few_shots_embeddings).to_csv(few_shot_embeddings_path, index=False)
+
 path = './data/'
 
 # After reading the CSV
@@ -377,17 +393,11 @@ if args.nonprivate:
             
         split_df = split_df._append({"_id":len(df)-1,"split":"val"},ignore_index=True)
 
-
-    df.to_feather(f"./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
-    split_df.to_feather(f"./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}_split.feather")
-    print(f"Generated dataset without noise saved to ./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
-
-    #save the generated dataset to a csv file with every parameter being a column and the text being the last column
-    output_df = df.copy()
-    params = [GENERATED_DATASET_SIZE,CANARY,CANARY_N,args.ensemble1,args.ensemble2,args.prompt_index]
-    for param in params:
-        output_df[str(param)] = [param]*len(output_df)           
-    output_df.to_csv(f"./data/generated/generated_non-private_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.csv",index=False)
+    # Save the generated dataset and split file in the output directory
+    df.to_feather(os.path.join(generated_data_path, "generated_dataset.feather"))
+    split_df.to_feather(os.path.join(generated_data_path, "generated_dataset_split.feather"))
+    df.to_csv(os.path.join(generated_data_path, "generated_dataset.csv"), index=False)
+    print(f"Generated dataset without noise saved to {os.path.join(generated_data_path, 'generated_dataset.feather')}")
 
 else:
     #private ESA
@@ -470,25 +480,13 @@ else:
             index = random.randint(0,len(dataset))
             df = df._append({"text":dataset["text"][index],"target":dataset["target"][index],"icd10_diag":dataset["icd10_diag"][index],"icd10_proc":dataset["icd10_proc"][index],"_id":len(df),"num_words":len(dataset["text"][index].split()),"num_targets":len(dataset["target"][index]),"icd10_long_title":dataset["long_title"][index]},ignore_index=True)
             split_df = split_df._append({"_id":len(df)-1,"split":"val"},ignore_index=True)
-        
 
-        
-        
+        # Save the generated dataset and split file in the output directory with epsilon in the name
+        df.to_feather(os.path.join(generated_data_path, f"generated_dataset_eps_{epsilon}.feather"))
+        split_df.to_feather(os.path.join(generated_data_path, f"generated_dataset_split_eps_{epsilon}.feather"))
+        df.to_csv(os.path.join(generated_data_path, f"generated_dataset_eps_{epsilon}.csv"), index=False)
+        print(f"Generated dataset for epsilon {epsilon} saved to {os.path.join(generated_data_path, f'generated_dataset_eps_{epsilon}.feather')}")
 
-
-        #save the generated dataset to a feather file
-        df.to_feather(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
-        split_df.to_feather(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}_split.feather")
-        print(f"Generated dataset for noise multiplier {epsilon} saved to ./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.feather")
-
-        #save the generated dataset to a csv file with every parameter being a column and the text being the last column
-        output_df = df.copy()
-        params = [GENERATED_DATASET_SIZE,CANARY,CANARY_N,args.ensemble1,args.ensemble2,args.prompt_index]
-        for param in params:
-            output_df[str(param)] = [param]*len(output_df)           
-        output_df.to_csv(f"./data/generated/generated_{epsilon}_{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_prompt_{args.prompt_index}.csv",index=False)
-
-    #split the dataset into a test set
 #print the total runtime
 print("Total runtime: ",(time.time()-start)/60,"minutes")
 #print dataset size

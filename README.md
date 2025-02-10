@@ -2,6 +2,8 @@
 
 A user-friendly web application for generating clinical discharge summaries. This tool helps medical researchers create realistic patient discharge summaries while maintaining privacy. It uses artificial intelligence (specifically, In-Context Learning) and can apply privacy protection to the generated data.
 
+> **Important**: This application is designed to work with MIMIC-IV version 2.2. Other versions may not be compatible.
+
 > **Note for Technical Users**: This README provides user-friendly instructions focused on using the Streamlit web interface. If you want to understand the technical details, command-line usage, custom dataset format, or implementation details, please check [README_OLD.md](README_OLD.md).
 
 ## What You Need Before Starting
@@ -20,10 +22,11 @@ A user-friendly web application for generating clinical discharge summaries. Thi
    - Ollama (will be installed automatically by our script)
 
 3. **Access Requirements**:
-   - MIMIC-IV dataset access credentials
-     - Visit [PhysioNet](https://physionet.org/content/mimiciv/2.2/)
+   - MIMIC-IV version 2.2 dataset access credentials
+     - Visit [PhysioNet MIMIC-IV 2.2](https://physionet.org/content/mimiciv/2.2/)
      - Create an account and complete the required training
      - Remember your username and password; you'll need them later
+     - Make sure to request access specifically for version 2.2
 
 ## Installation Guide
 
@@ -126,6 +129,17 @@ This step prepares the downloaded data:
 ### Step 4: Data Generation
 
 This is where you create new discharge summaries. You have several options to control how they're generated:
+
+> **Generation Time Estimates**: 
+> The application will show you an estimated completion time based on your settings. For example:
+> - With 100 samples and 5-shot setting:
+>   - Expect ~5 hours on an NVIDIA RTX 3090
+>   - Each sample takes about 1-2 minutes to generate
+>   - The number of shots affects generation time
+>   - More samples = longer total time
+> - These estimates assume GPU availability
+> - Times will be longer on less powerful GPUs
+> - CPU-only generation is not recommended (could take days)
 
 > **Important Note About Generation Times**: 
 > - With a compatible GPU (14GB+ VRAM): Expect about 1-2 minutes per summary
