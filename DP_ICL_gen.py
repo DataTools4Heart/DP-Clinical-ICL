@@ -12,9 +12,38 @@ import json
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import pandas as pd
+import os
+from datetime import datetime
 
 #set the seed
 set_seed(17)
+
+def get_settings_id(args):
+    """Generate a unique identifier for the current settings"""
+    if args.nonprivate:
+        privacy_setting = "nonprivate"
+    else:
+        privacy_setting = f"private_eps_{'-'.join(map(str, args.epsilons))}"
+    
+    return f"{args.model_name}_n{args.generated_dataset_size}_s{args.num_shots}_t{args.temperature}_{privacy_setting}"
+
+def create_output_directory(args):
+    """Create and return the output directory path based on current settings and timestamp"""
+    # Create base directory if it doesn't exist
+    base_dir = "./data/generated"
+    os.makedirs(base_dir, exist_ok=True)
+    
+    # Create settings directory
+    settings_id = get_settings_id(args)
+    settings_dir = os.path.join(base_dir, settings_id)
+    os.makedirs(settings_dir, exist_ok=True)
+    
+    # Create timestamp directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join(settings_dir, timestamp)
+    os.makedirs(output_dir, exist_ok=True)
+    
+    return output_dir
 
 #set the arguments
 parser = ArgumentParser()
@@ -40,8 +69,12 @@ parser.add_argument("--model_name",type=str,default="llama3.2",help="LLM to use 
 parser.add_argument("--custom_dataset_path",type=str,default=None,help="Custom dataset to use")
 args = parser.parse_args()
 
+# Validate custom prompt if provided
+if args.prompt is not None and not args.prompt.strip().endswith("ICD10-CODES="):
+    raise ValueError("Custom prompt must end with 'ICD10-CODES=' (no extra spaces after the '=')")
 
-
+# Create output directory for this run
+output_dir = create_output_directory(args)
 
 NUM_SHOTS = args.num_shots
 NUM_C = args.num_c
@@ -250,13 +283,13 @@ for j,k in tqdm(enumerate(range(0,NUM_PARTITIONS*partition_size,partition_size))
     few_shot_output_embedding = model.encode(out)
     few_shots_embeddings.append(few_shot_output_embedding)
 
-generated_data_path = "./data/generated/"
+generated_data_path = output_dir
 run_id = f"{GENERATED_DATASET_SIZE}_{CANARY}_{CANARY_N}_ensemble1_{args.ensemble1}_ensemble2_{args.ensemble2}_{args.nonprivate}"
-zero_shot_samples_path = generated_data_path + run_id + "_zero_shot_samples.json"
-few_shot_samples_path = generated_data_path + run_id + "_few_shot_samples.json"
-zero_shot_embeddings_path = generated_data_path + run_id + "_zero_shot_embeddings.csv"
-few_shot_embeddings_path = generated_data_path + run_id + "_few_shot_embeddings.csv"
-ground_truth_path = generated_data_path + run_id + "_ground_truth.json"
+zero_shot_samples_path = os.path.join(generated_data_path, "zero_shot_samples.json")
+few_shot_samples_path = os.path.join(generated_data_path, "few_shot_samples.json")
+zero_shot_embeddings_path = os.path.join(generated_data_path, "zero_shot_embeddings.csv")
+few_shot_embeddings_path = os.path.join(generated_data_path, "few_shot_embeddings.csv")
+ground_truth_path = os.path.join(generated_data_path, "ground_truth.json")
 
 #save the zero shot samples to a json file
 with open(zero_shot_samples_path,"w") as f:
@@ -460,3 +493,9 @@ else:
 print("Total runtime: ",(time.time()-start)/60,"minutes")
 #print dataset size
 print("Dataset size: ",len(dataset))
+
+# Save a settings.json file with all parameters used
+settings = vars(args)
+settings["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+with open(os.path.join(generated_data_path, "settings.json"), "w") as f:
+    json.dump(settings, f, indent=4)

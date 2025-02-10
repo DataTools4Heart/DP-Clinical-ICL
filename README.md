@@ -7,9 +7,11 @@ A user-friendly web application for generating clinical discharge summaries. Thi
 ## What You Need Before Starting
 
 1. **Computer Requirements**:
+   - **Graphics Card (GPU)**:
+     - An NVIDIA GPU with at least 14GB of VRAM is practically required
+     - While the application can run on CPU, generation would take many hours or even days
    - At least 16GB of RAM (memory)
    - At least 10GB of free disk space
-   - An NVIDIA graphics card (GPU) is recommended but not required
    - Any operating system (Windows, Mac, or Linux)
 
 2. **Software Requirements**:
@@ -45,7 +47,7 @@ A user-friendly web application for generating clinical discharge summaries. Thi
 
 1. First, download the code:
    ```bash
-   git clone https://github.com/yourusername/DP-Clinical-ICL.git
+   git clone https://github.com/DataTools4Heart/DP-Clinical-ICL.git
    ```
    - If this doesn't work, you may need to [install Git](https://git-scm.com/downloads) first
 
@@ -73,15 +75,29 @@ If everything works correctly, your default web browser should open automaticall
 
 The application works like a step-by-step wizard, with four main steps shown in the left sidebar:
 
+> **Note About Step Progression**: 
+> - You can skip any step that was already completed in a previous session
+> - The app will detect existing files and configurations
+> - For example:
+>   - If you've already downloaded the dataset, you can skip directly to extraction
+>   - If you've already extracted the data, you can go straight to generation
+>   - System checks can be skipped if you've verified your setup before
+> - Just click the desired step in the left sidebar to navigate
+
 ### Step 1: System Check
 
 This first page checks if your computer meets all requirements:
 - Shows how much memory (RAM) you have
 - Checks your available disk space
-- Looks for a compatible graphics card
-- Tells you if your system is ready to proceed
+- Verifies GPU compatibility and memory
+  - This is crucial as generation speed depends heavily on GPU availability
+  - A compatible GPU reduces generation time from hours to minutes
+  - The app will warn you if no GPU is found or if GPU memory is insufficient
+  - While you can proceed without a GPU, it's not recommended for practical use
 
-If any requirements aren't met, you'll see clear error messages explaining what's missing.
+If any requirements aren't met, you'll see clear error messages explaining what's missing. Pay special attention to GPU-related messages, as they will significantly impact the usability of the application.
+
+> You can skip this step in future sessions if your system configuration hasn't changed.
 
 ### Step 2: Dataset Download
 
@@ -89,9 +105,11 @@ Here you'll download the medical records database:
 1. Enter your PhysioNet username and password
 2. Click the "Download Dataset" button
 3. Wait for the download to complete (about 8GB of data)
-   - This might take 30-60 minutes depending on your internet speed
+   - This might take from some minutes to some hours depending on your internet speed
    - The app will show download progress
    - It's safe to leave this running in the background
+
+> If you've already downloaded the dataset in a previous session, you can skip this step.
 
 ### Step 3: Data Extraction
 
@@ -103,9 +121,19 @@ This step prepares the downloaded data:
    - It's normal if it seems slow at first
    - Don't close the browser window during this step
 
+> If you've already extracted the data and the files exist, you can skip directly to Data Generation.
+
 ### Step 4: Data Generation
 
 This is where you create new discharge summaries. You have several options to control how they're generated:
+
+> **Important Note About Generation Times**: 
+> - With a compatible GPU (14GB+ VRAM): Expect about 1-2 minutes per summary
+> - Without a GPU: Generation could take 30+ minutes per summary
+> - For bulk generation (e.g., 100 summaries), the difference is hours vs days
+> - We strongly recommend using a computer with a compatible GPU
+
+> This is typically the only step you'll need to repeat in subsequent sessions, as it creates new summaries each time.
 
 #### Basic Options:
 
@@ -150,6 +178,42 @@ This is where you create new discharge summaries. You have several options to co
 - You can download files directly from the web interface
 - Files remain available until you clear them using the "Clear Generated Files List" button
 
+## Using Your Own Dataset
+
+Instead of using MIMIC-IV, you can use your own clinical dataset. Here's what you need to know:
+
+### Dataset Requirements
+
+Your dataset must be in a specific format (Feather file, `.feather`) with these columns:
+1. `_id`: A unique number for each record
+2. `text`: The actual discharge summary
+3. `target`: All the ICD-10 codes for this record
+4. `icd10_diag`: Just the diagnostic codes
+5. `icd10_proc`: Just the procedure codes
+6. `long_title`: Descriptions of what each code means
+
+### Important Format Rules
+
+1. The ICD-10 codes must be written correctly:
+   - Diagnostic codes need a period after the first 3 characters (example: "A01.1")
+   - Procedure codes should not have periods (example: "02HN3DZ")
+
+2. Each record in your dataset must have:
+   - Text content (not empty)
+   - At least one ICD-10 code
+   - Descriptions for all codes
+
+### Example Record
+
+Here's what a single record in your dataset should look like:
+```
+Record ID: 1234
+Text: "Patient admitted with chest pain..."
+Diagnostic Codes: ["I25.10", "Z95.5"]
+Procedure Codes: ["02HN3DZ"]
+Code Descriptions: ["Atherosclerotic heart disease", "Presence of coronary stent", "Insertion of stent into coronary artery"]
+```
+
 ## Common Problems and Solutions
 
 1. **"The application seems frozen"**:
@@ -176,7 +240,10 @@ If you encounter problems:
 1. Check the error messages in the application
 2. Look through the Troubleshooting section above
 3. Contact your institution's IT support
-4. [Create an issue](https://github.com/yourusername/DP-Clinical-ICL/issues) on our GitHub page
+4. Contact the maintainer directly:
+   - Michele Miranda
+   - Email: michele.miranda@translated.net or miranda@di.uniroma1.it
+5. [Create an issue](https://github.com/yourusername/DP-Clinical-ICL/issues) on our GitHub page
 
 ## Citation
 
