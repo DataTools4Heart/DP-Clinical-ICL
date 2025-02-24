@@ -24,9 +24,7 @@ A user-friendly web application for generating clinical discharge summaries. Thi
 3. **Access Requirements**:
    - MIMIC-IV version 2.2 dataset access credentials
      - Visit [PhysioNet MIMIC-IV 2.2](https://physionet.org/content/mimiciv/2.2/)
-     - Create an account and complete the required training
-     - Remember your username and password; you'll need them later
-     - Make sure to request access specifically for version 2.2
+     - Create an account and complete the required training (see more in the [Acquire MIMIC access](#acquire-mimic-access) section)
 
 ## Installation Guide
 
