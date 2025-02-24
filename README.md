@@ -24,7 +24,7 @@ A user-friendly web application for generating clinical discharge summaries. Thi
 3. **Access Requirements**:
    - MIMIC-IV version 2.2 dataset access credentials
      - Visit [PhysioNet MIMIC-IV 2.2](https://physionet.org/content/mimiciv/2.2/)
-     - Create an account and complete the required training (see more in the [Acquire MIMIC access](#Step 2: Acquire MIMIC access) section)
+     - Create an account and complete the required training (see more in the [Step 2: Acquire MIMIC access](#acquire-mimic-access) section)
 
 ## Installation Guide
 
@@ -110,7 +110,7 @@ The training is a speciment research training, it is nothing technical or specif
 3. Go to [PhysioNet MIMIC-IV 2.2](https://physionet.org/content/mimiciv/2.2/)
 4. Scroll down to the bottom of the page, here you will see this:
 
-![MIMIC-IV 2.2](https://github.com/DataTools4Heart/DP-Clinical-ICL/blob/main/Images/Screenshot%202025-02-24%20alle%2016.16.36.png)
+![MIMIC-IV 2.2](./Images/Screenshot 2025-02-24 alle 16.16.36.png)
 
 5. Click on "CITI Data or Specimens Only Research"
 6. Complete the training following the instructions
