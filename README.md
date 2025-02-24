@@ -103,7 +103,8 @@ If any requirements aren't met, you'll see clear error messages explaining what'
 ### Step 2: Acquire MIMIC access
 
 Mimic is a credentialed dataset. You need to acquire access to it before you can download the dataset. For those who already have access, you can skip this step.
-The training is a specimen research training, it is nothing technical or specific to the application and chances are trained clinicians are already able to complete the test. As an alternative you can use your own dataset, properly formatted as indicated in the [Using Your Own Dataset](#using-your-own-dataset) section.
+The training is a specimen research training, it is nothing technical or specific to the application and chances are trained clinicians are already able to complete the test. 
+As an alternative you can use your own dataset, properly formatted as indicated in the [Using Your Own Dataset](#using-your-own-dataset) section.
 
 1. Go to [PhysioNet](https://physionet.org/)
 2. Create an account or login to your existing account
