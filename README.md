@@ -102,7 +102,22 @@ If any requirements aren't met, you'll see clear error messages explaining what'
 
 > You can skip this step in future sessions if your system configuration hasn't changed.
 
-### Step 2: Dataset Download
+### Step 2: Acquire MIMIC access
+
+Mimic is a credentialed dataset. You need to acquire access to it before you can download the dataset. For those who already have access, you can skip this step.
+The training is a speciment research training, it is nothing technical or specific to the application and chances are trained clinicians are already able to complete the test.
+
+1. Go to [PhysioNet](https://physionet.org/)
+2. Create an account or login to your existing account
+3. Go to [PhysioNet MIMIC-IV 2.2](https://physionet.org/content/mimiciv/2.2/)
+4. Scroll down to the bottom of the page, here you will see this:
+
+![MIMIC-IV 2.2](./Images/Screenshot 2025-02-24 alle 16.16.36.png)
+
+5. Click on "CITI Data or Specimens Only Research"
+6. Complete the training following the instructions
+7. Once the training is completed, you will be able to download the dataset
+### Step 3: Dataset Download
 
 Here you'll download the medical records database:
 1. Enter your PhysioNet username and password
@@ -114,7 +129,7 @@ Here you'll download the medical records database:
 
 > If you've already downloaded the dataset in a previous session, you can skip this step.
 
-### Step 3: Data Extraction
+### Step 4: Data Extraction
 
 This step prepares the downloaded data:
 1. Click the "Extract Data" button
@@ -126,7 +141,7 @@ This step prepares the downloaded data:
 
 > If you've already extracted the data and the files exist, you can skip directly to Data Generation.
 
-### Step 4: Data Generation
+### Step 5: Data Generation
 
 This is where you create new discharge summaries. You have several options to control how they're generated:
 
